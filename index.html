@@ -97,14 +97,26 @@ body {
   padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-top: 12px;
 }
 .status-row b { color: var(--brand-strong); font-size: 15px; }
-.myprize { margin-top: 14px; }
-.myprize h3 { font-size: 14px; margin-bottom: 8px; }
-.myprize .row {
-  display: flex; justify-content: space-between; gap: 10px;
-  font-size: 13px; padding: 8px 12px; border-radius: 10px;
+body.has-bg {
+  background-size: cover; background-position: center top;
+  background-repeat: no-repeat; background-attachment: fixed;
+  background-color: #f5f5f7;
+}
+body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba(0,0,0,.5); }
+.rec-group { margin-bottom: 14px; }
+.rec-group:last-child { margin-bottom: 0; }
+.rec-head {
+  font-size: 13px; font-weight: 700; color: var(--brand-strong);
+  padding: 6px 0 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;
+}
+.rec-row {
+  display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
+  font-size: 13px; padding: 7px 12px; border-radius: 10px;
   background: var(--surface-muted); margin-bottom: 6px;
 }
-.myprize .row .p { color: var(--brand-strong); font-weight: 600; }
+.rec-row .rec-time { color: var(--text-muted); flex: 0 0 auto; font-size: 12px; }
+.rec-row .rec-prize { color: var(--brand-strong); font-weight: 600; text-align: right; }
+.rec-empty { text-align: center; font-size: 13px; color: var(--text-muted); padding: 12px 0; }
 .footer {
   text-align: center; font-size: 12px; color: var(--text-muted);
   margin-top: 8px; line-height: 1.9;
@@ -153,6 +165,21 @@ body {
   border-radius: 12px; background: var(--brand); color: var(--brand-on);
   font-size: 15px; font-weight: 700; cursor: pointer;
 }
+.tip-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.5);
+  display: none; align-items: center; justify-content: center; z-index: 60; padding: 32px;
+}
+.tip-modal {
+  background: #fff; border-radius: 16px; padding: 24px 20px;
+  width: 100%; max-width: 300px; text-align: center;
+  animation: pop .22s ease;
+}
+.tip-modal .tip-text { font-size: 15px; line-height: 1.6; margin-bottom: 18px; }
+.tip-modal .tip-btn {
+  width: 100%; height: 44px; border: none; border-radius: 12px;
+  background: var(--brand); color: var(--brand-on);
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
 .hidden { display: none !important; }
 </style>
 </head>
@@ -168,7 +195,7 @@ body {
   <!-- 问卷卡 -->
   <div class="card" id="formCard">
     <h2>参与问卷</h2>
-    <div class="sub">填写后即可抽奖 · 一个手机号限 <b id="maxDrawsText">1</b> 次</div>
+    <div class="sub">填写后即可抽奖 · 一个出单手机号限 <b id="maxDrawsText">1</b> 次（同一工号可对应多个出单手机号）</div>
     <div class="err" id="formErr"></div>
     <div class="field" id="f_name">
       <label>真实姓名 <em>*</em></label>
@@ -183,8 +210,8 @@ body {
       <input id="inpPhone" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric">
     </div>
     <div class="field" id="f_gonghao">
-      <label>工号（选填）</label>
-      <input id="inpGonghao" type="text" placeholder="如 YD33835">
+      <label>工号 <em>*</em></label>
+      <input id="inpGonghao" type="text" placeholder="如 YD99999">
     </div>
     <button class="btn" id="formSubmit">提交问卷 · 解锁转盘</button>
     <div class="note">问卷信息仅用于本次抽奖核验与兑奖</div>
@@ -210,12 +237,26 @@ body {
       <span><b id="leftCnt">0</b> 次</span>
       <span id="joinedCnt">已参与 0 人</span>
     </div>
-    <div class="myprize" id="myPrizes"></div>
+  </div>
+
+  <!-- 抽奖记录 -->
+  <div class="card" id="recordCard">
+    <h2>抽奖记录</h2>
+    <div class="sub" id="recSub">每期抽奖记录都会保留</div>
+    <div id="recList"></div>
   </div>
 
   <div class="footer">
     奖品以实物为准 · 中奖结果请保留截图<br>
     <a href="admin.html">管理配置</a>
+  </div>
+</div>
+
+<!-- 通用提示弹窗 -->
+<div class="tip-mask" id="tipMask">
+  <div class="tip-modal">
+    <div class="tip-text" id="tipText"></div>
+    <button class="tip-btn" id="tipBtn" type="button">我知道了</button>
   </div>
 </div>
 
@@ -246,7 +287,9 @@ body {
   function defaultConfig() {
     return {
       period: '宠粉日第 88 期',
-      start: '', end: '',                 // 'YYYY-MM-DDTHH:mm'，留空不限制
+      poolName: '进阶奖池',
+      start: '', end: '',                 // 'YYYY-MM-DDTHH:mm'，end 即抽奖截止时间，留空不限制
+      bgUrl: '',                          // 背景图链接（全站生效）；本机上传的背景图优先
       maxDraws: 1,
       needForm: true,
       formFields: { name: true, base: true, phone: true, gonghao: true },
@@ -269,6 +312,8 @@ body {
       if (!raw) { var c = defaultConfig(); saveConfig(c); return c; }
       var c = JSON.parse(raw);
       if (!c.prizes || !c.prizes.length) c.prizes = defaultConfig().prizes;
+      if (c.poolName === undefined) c.poolName = '进阶奖池';
+      if (c.bgUrl === undefined) c.bgUrl = '';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -309,6 +354,13 @@ body {
     var s = (name || '').split(/[\s·：:，,]+/)[0];
     return s.length > 5 ? s.slice(0, 4) + '…' : s;
   }
+  /* 当期记录：跨期保留历史，但抽奖资格按当期计算 */
+  function periodRecords() {
+    return getRecords().filter(function (r) { return (r.period || '') === (cfg.period || ''); });
+  }
+  function usedCount(phone) {
+    return periodRecords().filter(function (r) { return r.phone === phone; }).length;
+  }
 
   /* ---------- 页面状态 ---------- */
   var cfg = getConfig();
@@ -318,11 +370,67 @@ body {
 
   /* ---------- 头部与卡片 ---------- */
   $('periodTitle').textContent = cfg.period || '幸运大转盘';
-  $('periodDates').textContent = cfg.start || cfg.end
-    ? '活动时间 ' + fmtDate(cfg.start) + ' 至 ' + fmtDate(cfg.end)
-    : '活动长期有效';
+  var expired = isExpired();
+  $('periodBadge').textContent = expired ? '已截止' : '活动进行中';
+  var dateTxt = [];
+  if (cfg.start) dateTxt.push('开始 ' + fmtDate(cfg.start));
+  if (cfg.end) dateTxt.push('抽奖截止 ' + fmtDate(cfg.end));
+  $('periodDates').textContent = dateTxt.length ? dateTxt.join(' · ') : '活动长期有效';
   $('maxDrawsText').textContent = cfg.maxDraws || 1;
-  $('joinedCnt').textContent = '已参与 ' + getRecords().length + ' 人';
+  $('joinedCnt').textContent = '本期已参与 ' + periodRecords().length + ' 人';
+  $('recSub').textContent = (cfg.poolName || '奖池') + ' · 每期抽奖记录都会保留';
+
+  function isExpired() {
+    return !!(cfg.end && Date.now() > new Date(cfg.end).getTime());
+  }
+
+  /* ---------- 通用提示弹窗 ---------- */
+  function showTip(msg) {
+    $('tipText').textContent = msg;
+    $('tipMask').style.display = 'flex';
+  }
+  $('tipBtn').addEventListener('click', function () { $('tipMask').style.display = 'none'; });
+  $('tipMask').addEventListener('click', function (ev) {
+    if (ev.target === $('tipMask')) $('tipMask').style.display = 'none';
+  });
+
+  /* ---------- 背景图 ---------- */
+  function applyBg() {
+    idbGet('bg::0').then(function (img) {
+      var src = img || cfg.bgUrl;
+      if (!src) return;
+      document.body.style.backgroundImage = 'url("' + src + '")';
+      document.body.classList.add('has-bg');
+    });
+  }
+
+  /* ---------- 抽奖记录（按期数+奖池分组，每期保留） ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function renderRecords() {
+    var box = $('recList');
+    var list = getRecords();
+    if (!list.length) { box.innerHTML = '<div class="rec-empty">暂无抽奖记录</div>'; return; }
+    var keys = [], map = {};
+    list.slice().reverse().forEach(function (r) {
+      var k = (r.period || '未命名期数') + ' · ' + (r.pool || cfg.poolName || '奖池');
+      if (!map[k]) { map[k] = []; keys.push(k); }
+      map[k].push(r);
+    });
+    var html = '';
+    keys.forEach(function (k) {
+      html += '<div class="rec-group"><div class="rec-head">' + esc(k) + '</div>';
+      map[k].forEach(function (r) {
+        html += '<div class="rec-row"><span class="rec-time">' + fmtDate(r.submitTime) + '</span>'
+          + '<span class="rec-prize">' + esc(r.prize || '-') + '</span></div>';
+      });
+      html += '</div>';
+    });
+    box.innerHTML = html;
+  }
 
   function buildForm() {
     var ff = cfg.formFields || {};
@@ -358,16 +466,17 @@ body {
     var phone = $('inpPhone').value.trim();
     var gonghao = $('inpGonghao').value.trim();
 
-    if (!inTimeWindow()) return showErr('当前不在活动时间内，敬请关注下期活动');
+    if (!inTimeWindow()) return showErr(isExpired() ? '本期抽奖已截止，敬请关注下期活动' : '活动尚未开始，敬请期待');
     if (ff.name && !name) return showErr('请填写真实姓名');
     if (ff.base && !base) return showErr('请选择所在基地');
+    if (ff.gonghao && !gonghao) return showErr('请填写工号');
     if (ff.phone) {
-      if (!/^1\d{10}$/.test(phone)) return showErr('手机号格式不正确，请输入 11 位手机号');
+      if (!/^\d{11}$/.test(phone)) { showTip('请检查您输入的手机号是否有误'); return; }
     } else { phone = ''; }
     if (phone) {
-      var cnt = getRecords().filter(function (r) { return r.phone === phone; }).length;
+      var cnt = usedCount(phone);
       if (cnt >= (cfg.maxDraws || 1)) {
-        return showErr('该手机号已参与本期活动（每人限 ' + (cfg.maxDraws || 1) + ' 次），一个手机号只能参与一个奖池');
+        return showErr('该出单手机号已参与本期抽奖（一个出单手机号仅可抽一次）');
       }
     }
     if (!cfg.prizes.some(function (p) { return p.stock === null || p.stock > 0; })) {
@@ -376,7 +485,7 @@ body {
 
     who = { phone: phone, name: name, base: base, gonghao: gonghao };
     if (phone) {
-      var nFinish = getRecords().filter(function (r) { return r.phone === phone; }).length;
+      var nFinish = usedCount(phone);
       $('whoBanner').textContent = '✓ 问卷已提交 · ' + (name || '') + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '');
       $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - nFinish);
     } else {
@@ -384,7 +493,7 @@ body {
     }
     $('formCard').classList.add('hidden');
     $('wheelCard').classList.remove('hidden');
-    refreshMyPrizes();
+    renderRecords();
   });
 
   /* ---------- 转盘 ---------- */
@@ -435,35 +544,18 @@ body {
     return avail[avail.length - 1];
   }
 
-  function refreshMyPrizes() {
-    var box = $('myPrizes');
-    box.innerHTML = '';
-    if (!who || !who.phone) return;
-    var list = getRecords().filter(function (r) { return r.phone === who.phone; });
-    if (!list.length) return;
-    var h = document.createElement('h3');
-    h.textContent = '我的中奖记录';
-    box.appendChild(h);
-    list.forEach(function (r) {
-      var d = document.createElement('div');
-      d.className = 'row';
-      d.innerHTML = '<span class="p">' + r.prize + '</span><span>' + fmtDate(r.submitTime) + '</span>';
-      box.appendChild(d);
-    });
-  }
-
   $('spinBtn').addEventListener('click', function () {
     if (spinning) return;
-    if (!inTimeWindow()) { alert('当前不在活动时间内'); return; }
+    if (!inTimeWindow()) { showTip(isExpired() ? '本期抽奖已截止' : '活动尚未开始'); return; }
     if (who && who.phone) {
-      var used = getRecords().filter(function (r) { return r.phone === who.phone; }).length;
+      var used = usedCount(who.phone);
       if (used >= (cfg.maxDraws || 1)) {
-        alert('已达本期抽奖次数上限（' + (cfg.maxDraws || 1) + ' 次）');
+        showTip('该出单手机号已抽过奖，一个出单手机号仅可抽一次');
         return;
       }
     }
     var prize = pickPrize();
-    if (!prize) { alert('本期奖品已抽完'); return; }
+    if (!prize) { showTip('本期奖品已抽完'); return; }
 
     spinning = true;
     $('spinBtn').disabled = true;
@@ -493,16 +585,18 @@ body {
       if (who) {
         addRecord({
           phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
-          prizeId: prize.id, prize: prize.name, submitTime: new Date().toISOString()
+          prizeId: prize.id, prize: prize.name,
+          period: cfg.period, pool: cfg.poolName || '进阶奖池',
+          submitTime: new Date().toISOString()
         });
       }
-      $('joinedCnt').textContent = '已参与 ' + getRecords().length + ' 人';
+      $('joinedCnt').textContent = '本期已参与 ' + periodRecords().length + ' 人';
       if (who && who.phone) {
-        var used = getRecords().filter(function (r) { return r.phone === who.phone; }).length;
+        var used = usedCount(who.phone);
         $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - used);
         if (used >= (cfg.maxDraws || 1)) { $('spinBtn').disabled = true; $('spinBtn').textContent = '已用完'; }
       }
-      refreshMyPrizes();
+      renderRecords();
       showModal(prize);
     }, 4350);
   });
@@ -564,6 +658,14 @@ body {
     $('whoBanner').textContent = '✓ 活动进行中，直接开抽';
     $('leftCnt').textContent = cfg.maxDraws || 1;
   }
+  if (expired) {
+    $('formSubmit').disabled = true;
+    $('formSubmit').textContent = '抽奖已截止';
+    $('spinBtn').disabled = true;
+    $('spinBtn').textContent = '已截止';
+  }
+  applyBg();
+  renderRecords();
   drawWheel();
 })();
 </script>

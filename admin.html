@@ -137,6 +137,13 @@ td { word-break: break-all; }
 }
 .footerlink { text-align: center; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
 .footerlink a { color: var(--text-muted); }
+.bg-preview {
+  height: 110px; border-radius: 10px; border: 1px solid var(--border);
+  background: linear-gradient(180deg, #0AB861 0%, #E5FFF2 60%, #f5f5f7 100%);
+  background-size: cover; background-position: center;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: var(--text-muted);
+}
 .hidden { display: none !important; }
 </style>
 </head>
@@ -168,26 +175,30 @@ td { word-break: break-all; }
     <!-- 活动设置 -->
     <div class="card">
       <h2>活动设置 <button class="btn small" id="saveSetting">保存设置</button></h2>
-      <div class="sub">期数名称会同步显示在活动页顶部</div>
+      <div class="sub">期数名称、奖池名称会同步显示在活动页；只有在本页才能设置截止时间</div>
       <div class="grid2">
         <div class="field">
           <label>期数名称</label>
           <input type="text" id="setPeriod" placeholder="如 宠粉日第 88 期">
         </div>
         <div class="field">
-          <label>每人抽奖次数</label>
-          <input type="number" id="setMaxDraws" min="1" max="99" value="1">
+          <label>奖池名称</label>
+          <input type="text" id="setPoolName" placeholder="如 进阶奖池 / 巅峰奖池">
         </div>
       </div>
       <div class="grid2">
         <div class="field">
-          <label>活动开始时间（留空不限）</label>
-          <input type="datetime-local" id="setStart">
+          <label>每人抽奖次数</label>
+          <input type="number" id="setMaxDraws" min="1" max="99" value="1">
         </div>
         <div class="field">
-          <label>活动结束时间（留空不限）</label>
+          <label>抽奖截止时间（留空 = 不限，到点自动截止）</label>
           <input type="datetime-local" id="setEnd">
         </div>
+      </div>
+      <div class="field">
+        <label>抽奖开始时间（留空 = 不限）</label>
+        <input type="datetime-local" id="setStart">
       </div>
       <div class="field">
         <label class="switch"><input type="checkbox" id="setNeedForm"> 参与前需填写问卷</label>
@@ -197,11 +208,22 @@ td { word-break: break-all; }
           <label class="switch"><input type="checkbox" data-f="phone"> 手机号</label>
           <label class="switch"><input type="checkbox" data-f="gonghao"> 工号</label>
         </div>
-        <div class="hint">手机号用于「一手机号限抽一次」校验，中奖记录按手机号核对</div>
+        <div class="hint">手机号用于「一个出单手机号仅可抽一次」校验；同一工号可对应多个出单手机号，工号不参与唯一性校验</div>
       </div>
       <div class="field">
         <label>基地选项（每行一个）</label>
         <textarea id="setBases" placeholder="北京&#10;武汉&#10;成都"></textarea>
+      </div>
+      <div class="field">
+        <label>活动背景图</label>
+        <div class="btnrow" style="margin-bottom:10px">
+          <button class="btn ghost" id="uploadBg">上传背景图</button>
+          <button class="btn ghost" id="clearBg">清除本机背景</button>
+        </div>
+        <input type="text" id="setBgUrl" placeholder="https://... （图片链接，所有访客都能看到）">
+        <div class="hint" style="margin-bottom:10px">本机上传的背景图优先显示，但只在本机生效；想让大家都能看到，请填图片链接</div>
+        <div class="bg-preview" id="bgPreview">默认渐变背景</div>
+        <input type="file" id="bgFile" accept="image/*" style="display:none">
       </div>
       <div class="field">
         <label>修改管理密码</label>
@@ -250,7 +272,7 @@ td { word-break: break-all; }
     <!-- 数据工具 -->
     <div class="card">
       <h2>数据工具</h2>
-      <div class="sub">中奖记录字段：手机号 / 姓名 / 基地 / 工号 / 奖品 / 提交时间 —— 与名单审核工具口径对齐，后续可直接导入</div>
+      <div class="sub">中奖记录字段：期数 / 奖池 / 手机号 / 姓名 / 基地 / 工号 / 奖品 / 抽奖时间 —— 与名单审核工具口径对齐，后续可直接导入</div>
       <div class="btnrow" style="margin-bottom:14px">
         <button class="btn" id="exportRec">导出中奖记录 JSON</button>
         <button class="btn ghost" id="exportCfg">导出活动配置 JSON</button>
@@ -259,7 +281,7 @@ td { word-break: break-all; }
       </div>
       <div class="tablebox hidden" id="recTableBox">
         <table id="recTable">
-          <thead><tr><th>手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品</th><th>提交时间</th></tr></thead>
+          <thead><tr><th>期数</th><th>奖池</th><th>手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品</th><th>抽奖时间</th></tr></thead>
           <tbody></tbody>
         </table>
       </div>
@@ -283,7 +305,9 @@ td { word-break: break-all; }
   function defaultConfig() {
     return {
       period: '宠粉日第 88 期',
+      poolName: '进阶奖池',
       start: '', end: '',
+      bgUrl: '',
       maxDraws: 1,
       needForm: true,
       formFields: { name: true, base: true, phone: true, gonghao: true },
@@ -304,7 +328,10 @@ td { word-break: break-all; }
     try {
       var raw = localStorage.getItem(LS_KEY);
       if (!raw) { var c = defaultConfig(); saveConfig(c); return c; }
-      return JSON.parse(raw);
+      var c = JSON.parse(raw);
+      if (c.poolName === undefined) c.poolName = '进阶奖池';
+      if (c.bgUrl === undefined) c.bgUrl = '';
+      return c;
     } catch (e) { return defaultConfig(); }
   }
   function saveConfig(c) { localStorage.setItem(LS_KEY, JSON.stringify(c)); }
@@ -345,7 +372,7 @@ td { word-break: break-all; }
       return new Promise(function (res) {
         if (!db) return res(false);
         var tx = db.transaction(IDB_STORE, 'readwrite');
-        tx.objectStore(IDB_STORE).delete(key);
+        tx.objectStore(IDB_STORE)['delete'](key);
         tx.oncomplete = function () { res(true); };
         tx.onerror = function () { res(false); };
       });
@@ -385,12 +412,13 @@ td { word-break: break-all; }
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
   }
-  function compressImage(file, cb) {
+  function compressImage(file, cb, maxSize) {
     var img = new Image();
     var url = URL.createObjectURL(file);
     img.onload = function () {
       URL.revokeObjectURL(url);
-      var scale = Math.min(1, 900 / Math.max(img.width, img.height));
+      var m = maxSize || 900;
+      var scale = Math.min(1, m / Math.max(img.width, img.height));
       var cv = document.createElement('canvas');
       cv.width = Math.round(img.width * scale);
       cv.height = Math.round(img.height * scale);
@@ -434,9 +462,11 @@ td { word-break: break-all; }
   /* ---------- 活动设置 ---------- */
   function loadSetting() {
     $('setPeriod').value = cfg.period || '';
+    $('setPoolName').value = cfg.poolName || '';
     $('setMaxDraws').value = cfg.maxDraws || 1;
     $('setStart').value = cfg.start || '';
     $('setEnd').value = cfg.end || '';
+    $('setBgUrl').value = cfg.bgUrl || '';
     $('setNeedForm').checked = !!cfg.needForm;
     var ff = cfg.formFields || {};
     ['name', 'base', 'phone', 'gonghao'].forEach(function (f) {
@@ -444,6 +474,7 @@ td { word-break: break-all; }
     });
     $('setBases').value = (cfg.baseOptions || []).join('\n');
     $('periodBadge').textContent = cfg.period || '未设置期数';
+    renderBgPreview();
   }
   $('saveSetting').addEventListener('click', function () {
     var ff = {};
@@ -451,15 +482,51 @@ td { word-break: break-all; }
       ff[c.getAttribute('data-f')] = c.checked;
     });
     cfg.period = $('setPeriod').value.trim() || '幸运大转盘';
+    cfg.poolName = $('setPoolName').value.trim() || '进阶奖池';
     cfg.maxDraws = Math.max(1, parseInt($('setMaxDraws').value, 10) || 1);
     cfg.start = $('setStart').value;
     cfg.end = $('setEnd').value;
+    cfg.bgUrl = $('setBgUrl').value.trim();
     cfg.needForm = $('setNeedForm').checked;
     cfg.formFields = ff;
     cfg.baseOptions = $('setBases').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
     saveConfig(cfg);
     $('periodBadge').textContent = cfg.period;
+    renderBgPreview();
     toast('活动设置已保存');
+  });
+
+  /* ---------- 背景图 ---------- */
+  function renderBgPreview() {
+    var box = $('bgPreview');
+    idbGet('bg::0').then(function (img) {
+      var src = img || cfg.bgUrl;
+      if (!src) {
+        box.style.backgroundImage = '';
+        box.textContent = '默认渐变背景';
+        return;
+      }
+      box.textContent = img ? '本机背景图（仅本机可见）' : '链接背景图（全站可见）';
+      box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + src + '")';
+    });
+  }
+  $('uploadBg').addEventListener('click', function () { $('bgFile').click(); });
+  $('bgFile').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    compressImage(f, function (dataURL) {
+      idbPut('bg::0', dataURL).then(function (ok) {
+        if (ok) { toast('背景图已保存（本机）'); renderBgPreview(); }
+        else toast('保存失败：浏览器不支持本地存储');
+      });
+    }, 1600);
+    this.value = '';
+  });
+  $('clearBg').addEventListener('click', function () {
+    idbDel('bg::0').then(function () {
+      toast('已清除本机背景图');
+      renderBgPreview();
+    });
   });
   $('changePass').addEventListener('click', function () {
     var v = $('newPass').value.trim();
@@ -636,6 +703,8 @@ td { word-break: break-all; }
     getRecords().slice().reverse().forEach(function (r) {
       var tr = document.createElement('tr');
       tr.innerHTML =
+        '<td>' + (r.period || '-') + '</td>' +
+        '<td>' + (r.pool || '-') + '</td>' +
         '<td>' + (r.phone || '-') + '</td>' +
         '<td>' + (r.name || '-') + '</td>' +
         '<td>' + (r.base || '-') + '</td>' +
