@@ -229,6 +229,18 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .again-btn:hover { filter: brightness(1.03); }
 .again-btn:active { transform: translateY(1px); }
+/* 推广海报入口 */
+.promo-row { margin-top: 13px; display: flex; justify-content: center; }
+.promo-btn {
+  padding: 10px 18px; border-radius: 999px; cursor: pointer; font-family: inherit;
+  font-size: 13.5px; font-weight: 700; letter-spacing: .5px;
+  color: var(--red-700); background: linear-gradient(180deg, #FFFFFF, #FFF7E8);
+  border: 1px solid rgba(210,165,68,.6);
+  box-shadow: inset 0 1px 0 #FFFFFF, 0 3px 8px rgba(78,5,9,.10);
+  transition: transform .12s ease, filter .18s;
+}
+.promo-btn:hover { filter: brightness(1.03); }
+.promo-btn:active { transform: translateY(1px); }
 
 .wheel-area { position: relative; width: min(330px, 86vw); margin: 16px auto 0; }
 /* 转盘背后的暖金光晕：在暖白卡面上轻轻托起转盘 */
@@ -445,6 +457,9 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       <span class="period-name" id="periodTitle"></span>
     </div>
     <div class="dates" id="periodDates"></div>
+    <div class="promo-row">
+      <button type="button" class="promo-btn" id="posterBtn">生成推广海报</button>
+    </div>
   </header>
 
   <!-- 参与问卷 -->
@@ -536,6 +551,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 </div>
 
 <script src="templates.js"></script>
+<script src="poster.js"></script>
 <script>
 (function () {
   'use strict';
@@ -757,6 +773,20 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       sel.appendChild(o);
     });
   }
+  $('posterBtn').addEventListener('click', function () {
+    LuckyPoster.open({
+      title: cfg.period || '幸运大转盘',
+      subtitle: '奖池：' + (cfg.poolName || '进阶奖池'),
+      lines: [
+        '填写出单信息即可参与抽奖',
+        '同一工号累计出单满 ' + (cfg.peakAmount || 20000) + ' 元，解锁' + (cfg.peakPoolName || '巅峰奖池')
+      ],
+      url: location.origin + location.pathname.replace(/[^/]*$/, ''),
+      cover: 'assets/cover.jpg',
+      footer: '出单越多，惊喜越多 · 奖品以实物为准'
+    });
+  });
+
   /* 再次填写：回到问卷，保留姓名/基地（同一人常填多单），清掉本单相关字段 */
   $('againBtn').addEventListener('click', function () {
     who = null;
