@@ -283,9 +283,13 @@
         var labelCls = opt.labelSans ? ' lw-slice-label--sans' : '';
         for (i = 0; i < n; i++) {
           var midDeg = -90 + i * seg + seg / 2;
-          var t2 = isVoid(prizes[i]) ? opt.voidTone : opt.tones[i % opt.tones.length];
-          s += labelSvg(CX, CY, opt.textR || TEXT_R, midDeg, fs,
-            shortLabel(prizes[i] ? prizes[i].name : '', opt.labelLen || 5), t2.t, t2.h || HALO_DARK, labelCls);
+          var vd = isVoid(prizes[i]);
+          var t2 = vd ? opt.voidTone : opt.tones[i % opt.tones.length];
+          /* 有图的模板里，未中奖格没有奖品图，径向空间更宽裕：标签可放宽 1 字并外移 */
+          var lr = (opt.images && vd) ? (opt.textR || TEXT_R) + 12 : (opt.textR || TEXT_R);
+          var llen = (opt.labelLen || 5) + ((opt.images && vd) ? 1 : 0);
+          s += labelSvg(CX, CY, lr, midDeg, fs,
+            shortLabel(prizes[i] ? prizes[i].name : '', llen), t2.t, t2.h || HALO_DARK, labelCls);
         }
         s += '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '" fill="url(#' + shade + ')"></circle>';
         /* 轮毂：金带 → 凹槽 → 金细线 */
