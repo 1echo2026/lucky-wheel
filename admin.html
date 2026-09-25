@@ -137,6 +137,16 @@ td { word-break: break-all; }
 }
 .footerlink { text-align: center; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
 .footerlink a { color: var(--text-muted); }
+.qbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.inline-input {
+  min-height: 40px; padding: 8px 12px; font-size: 14px;
+  border: 1px solid var(--border); border-radius: 10px;
+  background: var(--surface-muted); color: var(--text);
+  outline: none; font-family: inherit; box-sizing: border-box;
+}
+.inline-input:focus { border-color: var(--brand); background: #fff; }
+.qbar .inline-input { flex: 1 1 150px; min-width: 0; }
+.qbar .btn { flex: 0 0 auto; }
 .bg-preview {
   height: 110px; border-radius: 10px; border: 1px solid var(--border);
   background: linear-gradient(180deg, #0AB861 0%, #E5FFF2 60%, #f5f5f7 100%);
@@ -215,13 +225,30 @@ td { word-break: break-all; }
         <textarea id="setBases" placeholder="北京&#10;武汉&#10;成都"></textarea>
       </div>
       <div class="field">
-        <label>活动背景图</label>
+        <label>活动背景图（所有人可见）</label>
         <div class="btnrow" style="margin-bottom:10px">
-          <button class="btn ghost" id="uploadBg">上传背景图</button>
-          <button class="btn ghost" id="clearBg">清除本机背景</button>
+          <button class="btn" id="uploadBg">上传并发布背景图</button>
+          <button class="btn ghost" id="clearBg">清除旧的本机背景</button>
         </div>
-        <input type="text" id="setBgUrl" placeholder="https://... （图片链接，所有访客都能看到）">
-        <div class="hint" style="margin-bottom:10px">本机上传的背景图优先显示，但只在本机生效；想让大家都能看到，请填图片链接</div>
+        <div class="hint" style="margin-bottom:10px">
+          上传后会发布到仓库 <b>assets/bg.jpg</b>，所有访客打开抽奖页都能看到；发布后约 1~10 分钟全网生效。
+          发布需要在下面填一次 GitHub 令牌（只存本机浏览器，不会上传）。
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>GitHub 令牌（需对该仓库有 Contents 写入权限）</label>
+            <div class="btnrow">
+              <input type="password" id="ghToken" placeholder="ghp_... / github_pat_..." style="flex:1;min-width:140px">
+              <button class="btn ghost" id="saveToken">保存令牌</button>
+            </div>
+          </div>
+          <div class="field">
+            <label>仓库（owner/repo）</label>
+            <input type="text" id="setRepo" placeholder="1echo2026/lucky-wheel">
+          </div>
+        </div>
+        <label style="margin-top:4px">或填写图片链接（无需令牌，同样所有人可见）</label>
+        <input type="text" id="setBgUrl" placeholder="https://... （图片链接）" style="margin-bottom:10px">
         <div class="bg-preview" id="bgPreview">默认渐变背景</div>
         <input type="file" id="bgFile" accept="image/*" style="display:none">
       </div>
@@ -269,21 +296,33 @@ td { word-break: break-all; }
       </div>
     </div>
 
+    <!-- 抽奖记录查询 -->
+    <div class="card">
+      <h2>抽奖记录查询</h2>
+      <div class="sub">按出单手机号或工号查询（支持模糊匹配），可按期数筛选；两项都留空则显示全部记录</div>
+      <div class="qbar">
+        <input type="text" id="qKeyword" class="inline-input" placeholder="出单手机号 / 工号">
+        <select id="qPeriod" class="inline-input"></select>
+        <button class="btn" id="qBtn">查询</button>
+        <button class="btn ghost" id="qReset">重置</button>
+      </div>
+      <div class="hint" id="qSummary" style="margin-bottom:10px">暂无记录</div>
+      <div class="tablebox" id="qResultBox">
+        <table>
+          <thead><tr><th>期数</th><th>奖池</th><th>抽奖时间</th><th>出单手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品奖项</th></tr></thead>
+          <tbody id="qBody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <!-- 数据工具 -->
     <div class="card">
       <h2>数据工具</h2>
-      <div class="sub">中奖记录字段：期数 / 奖池 / 手机号 / 姓名 / 基地 / 工号 / 奖品 / 抽奖时间 —— 与名单审核工具口径对齐，后续可直接导入</div>
-      <div class="btnrow" style="margin-bottom:14px">
+      <div class="sub">当前共 <b id="recCount">0</b> 条抽奖记录 · 字段：期数 / 奖池 / 手机号 / 姓名 / 基地 / 工号 / 奖品 / 抽奖时间（与名单审核工具口径对齐，后续可直接导入）</div>
+      <div class="btnrow">
         <button class="btn" id="exportRec">导出中奖记录 JSON</button>
         <button class="btn ghost" id="exportCfg">导出活动配置 JSON</button>
-        <button class="btn ghost" id="toggleRec">查看记录（<span id="recCount">0</span>）</button>
         <button class="btn danger" id="clearRec">清空记录</button>
-      </div>
-      <div class="tablebox hidden" id="recTableBox">
-        <table id="recTable">
-          <thead><tr><th>期数</th><th>奖池</th><th>手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品</th><th>抽奖时间</th></tr></thead>
-          <tbody></tbody>
-        </table>
       </div>
     </div>
 
@@ -298,6 +337,7 @@ td { word-break: break-all; }
   'use strict';
   /* ---------- 存储协议（与 index.html 一致） ---------- */
   var LS_KEY = 'lw_config', LS_REC = 'lw_records', LS_PASS = 'lw_pass';
+  var LS_GH_TOKEN = 'lw_gh_token', LS_GH_REPO = 'lw_gh_repo';
   var SK_PASS = 'lw_admin_ok';
   var IDB_NAME = 'lucky_wheel', IDB_STORE = 'images';
   var DEFAULT_PASS = 'admin888';
@@ -467,6 +507,8 @@ td { word-break: break-all; }
     $('setStart').value = cfg.start || '';
     $('setEnd').value = cfg.end || '';
     $('setBgUrl').value = cfg.bgUrl || '';
+    $('setRepo').value = localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel';
+    $('ghToken').placeholder = localStorage.getItem(LS_GH_TOKEN) ? '令牌已保存（粘贴新值可覆盖）' : 'ghp_... / github_pat_...';
     $('setNeedForm').checked = !!cfg.needForm;
     var ff = cfg.formFields || {};
     ['name', 'base', 'phone', 'gonghao'].forEach(function (f) {
@@ -491,40 +533,87 @@ td { word-break: break-all; }
     cfg.formFields = ff;
     cfg.baseOptions = $('setBases').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
     saveConfig(cfg);
+    localStorage.setItem(LS_GH_REPO, ghRepo());
     $('periodBadge').textContent = cfg.period;
     renderBgPreview();
     toast('活动设置已保存');
   });
 
-  /* ---------- 背景图 ---------- */
+  /* ---------- 背景图（上传后发布到仓库，所有人可见） ---------- */
+  var BG_PATH = 'assets/bg.jpg', BG_BRANCH = 'main';
+
+  function ghRepo() {
+    return ($('setRepo').value || localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel').trim();
+  }
   function renderBgPreview() {
     var box = $('bgPreview');
-    idbGet('bg::0').then(function (img) {
-      var src = img || cfg.bgUrl;
-      if (!src) {
-        box.style.backgroundImage = '';
-        box.textContent = '默认渐变背景';
-        return;
-      }
-      box.textContent = img ? '本机背景图（仅本机可见）' : '链接背景图（全站可见）';
-      box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + src + '")';
-    });
+    box.textContent = '加载中…';
+    box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + BG_PATH + '?v=' + Date.now() + '")';
+    var probe = new Image();
+    probe.onload = function () { box.textContent = '已发布到线上的背景图（所有人可见）'; };
+    probe.onerror = function () {
+      idbGet('bg::0').then(function (img) {
+        var src = img || cfg.bgUrl;
+        if (!src) {
+          box.style.backgroundImage = '';
+          box.textContent = '默认渐变背景（尚未发布背景图）';
+          return;
+        }
+        box.textContent = img ? '旧的本机背景图（仅本机可见）' : '链接背景图（所有人可见）';
+        box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + src + '")';
+      });
+    };
+    probe.src = BG_PATH + '?v=' + Date.now();
   }
+
+  $('saveToken').addEventListener('click', function () {
+    var t = $('ghToken').value.trim();
+    if (!t) return toast('请粘贴 GitHub 令牌');
+    localStorage.setItem(LS_GH_TOKEN, t);
+    localStorage.setItem(LS_GH_REPO, ghRepo());
+    $('ghToken').value = '';
+    toast('令牌已保存到本机浏览器');
+  });
+
+  function publishBg(dataURL) {
+    var token = localStorage.getItem(LS_GH_TOKEN);
+    if (!token) { toast('请先填写并保存 GitHub 令牌'); return; }
+    var repo = ghRepo();
+    if (repo.indexOf('/') < 0) { toast('仓库格式应为 owner/repo'); return; }
+    var b64 = dataURL.split(',')[1];
+    var api = 'https://api.github.com/repos/' + repo + '/contents/' + BG_PATH;
+    var headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' };
+    toast('正在发布背景图…');
+    fetch(api + '?ref=' + BG_BRANCH, { headers: headers })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .catch(function () { return null; })
+      .then(function (cur) {
+        var body = { message: 'chore: 更新活动背景图', content: b64, branch: BG_BRANCH };
+        if (cur && cur.sha) body.sha = cur.sha;
+        return fetch(api, {
+          method: 'PUT',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, headers),
+          body: JSON.stringify(body)
+        });
+      })
+      .then(function (r) {
+        if (r.ok) { toast('已发布，约 1~10 分钟后所有人可见'); renderBgPreview(); return; }
+        return r.json().then(function (e) { toast('发布失败：' + (e.message || ('HTTP ' + r.status))); })
+          .catch(function () { toast('发布失败：HTTP ' + r.status + '（请检查令牌权限）'); });
+      })
+      .catch(function () { toast('发布失败：网络不通，本机可能无法访问 api.github.com'); });
+  }
+
   $('uploadBg').addEventListener('click', function () { $('bgFile').click(); });
   $('bgFile').addEventListener('change', function () {
     var f = this.files && this.files[0];
     if (!f) return;
-    compressImage(f, function (dataURL) {
-      idbPut('bg::0', dataURL).then(function (ok) {
-        if (ok) { toast('背景图已保存（本机）'); renderBgPreview(); }
-        else toast('保存失败：浏览器不支持本地存储');
-      });
-    }, 1600);
+    compressImage(f, function (dataURL) { publishBg(dataURL); }, 1600);
     this.value = '';
   });
   $('clearBg').addEventListener('click', function () {
     idbDel('bg::0').then(function () {
-      toast('已清除本机背景图');
+      toast('已清除本机旧背景图');
       renderBgPreview();
     });
   });
@@ -677,8 +766,79 @@ td { word-break: break-all; }
   });
   $('cancelEdit').addEventListener('click', closeEdit);
 
+  /* ---------- 抽奖记录查询 ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fillPeriodOptions() {
+    var sel = $('qPeriod');
+    var cur = sel.value;
+    var list = [], seen = {};
+    getRecords().forEach(function (r) {
+      var pd = r.period || '未命名期数';
+      if (!seen[pd]) { seen[pd] = 1; list.push(pd); }
+    });
+    sel.innerHTML = '';
+    var all = document.createElement('option');
+    all.value = ''; all.textContent = '全部期数';
+    sel.appendChild(all);
+    list.forEach(function (pd) {
+      var o = document.createElement('option');
+      o.value = pd; o.textContent = pd;
+      sel.appendChild(o);
+    });
+    if (cur) sel.value = cur;
+  }
+  function renderQuery() {
+    var kw = $('qKeyword').value.trim();
+    var pd = $('qPeriod').value;
+    var list = getRecords().slice().reverse();
+    if (pd) list = list.filter(function (r) { return (r.period || '未命名期数') === pd; });
+    if (kw) {
+      list = list.filter(function (r) {
+        return (r.phone || '').indexOf(kw) >= 0 || (r.gonghao || '').indexOf(kw) >= 0;
+      });
+    }
+    var tb = $('qBody');
+    tb.innerHTML = '';
+    list.forEach(function (r) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + esc(r.period || '-') + '</td>' +
+        '<td>' + esc(r.pool || '-') + '</td>' +
+        '<td>' + fmtDate(r.submitTime) + '</td>' +
+        '<td>' + esc(r.phone || '-') + '</td>' +
+        '<td>' + esc(r.name || '-') + '</td>' +
+        '<td>' + esc(r.base || '-') + '</td>' +
+        '<td>' + esc(r.gonghao || '-') + '</td>' +
+        '<td>' + esc(r.prize || '-') + '</td>';
+      tb.appendChild(tr);
+    });
+    var total = getRecords().length;
+    var cond = [];
+    if (kw) cond.push('关键词「' + esc(kw) + '」');
+    if (pd) cond.push('期数「' + esc(pd) + '」');
+    $('qSummary').innerHTML = cond.length
+      ? '命中 <b>' + list.length + '</b> 条（共 ' + total + ' 条）· 筛选条件：' + cond.join(' + ')
+      : (total ? '共 <b>' + total + '</b> 条记录，未加筛选条件' : '暂无记录');
+  }
+  $('qBtn').addEventListener('click', renderQuery);
+  $('qKeyword').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') renderQuery(); });
+  $('qPeriod').addEventListener('change', renderQuery);
+  $('qReset').addEventListener('click', function () {
+    $('qKeyword').value = '';
+    $('qPeriod').value = '';
+    renderQuery();
+  });
+
   /* ---------- 数据工具 ---------- */
-  function refreshRecCount() { $('recCount').textContent = getRecords().length; }
+  function refreshRecCount() {
+    $('recCount').textContent = getRecords().length;
+    fillPeriodOptions();
+    renderQuery();
+  }
   $('exportRec').addEventListener('click', function () {
     var recs = getRecords();
     if (!recs.length) return toast('暂无中奖记录');
@@ -694,27 +854,6 @@ td { word-break: break-all; }
     download('lucky-wheel-config-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.json',
       JSON.stringify(getConfig(), null, 2));
     toast('配置已导出');
-  });
-  $('toggleRec').addEventListener('click', function () {
-    var box = $('recTableBox');
-    if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
-    var tb = $('recTable').querySelector('tbody');
-    tb.innerHTML = '';
-    getRecords().slice().reverse().forEach(function (r) {
-      var tr = document.createElement('tr');
-      tr.innerHTML =
-        '<td>' + (r.period || '-') + '</td>' +
-        '<td>' + (r.pool || '-') + '</td>' +
-        '<td>' + (r.phone || '-') + '</td>' +
-        '<td>' + (r.name || '-') + '</td>' +
-        '<td>' + (r.base || '-') + '</td>' +
-        '<td>' + (r.gonghao || '-') + '</td>' +
-        '<td>' + (r.prize || '-') + '</td>' +
-        '<td>' + fmtDate(r.submitTime) + '</td>';
-      tb.appendChild(tr);
-    });
-    box.classList.remove('hidden');
-    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
   $('clearRec').addEventListener('click', function () {
     if (!confirm('确定清空全部中奖记录？此操作不可恢复')) return;
