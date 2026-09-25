@@ -333,11 +333,14 @@
         s += '<button type="button" class="lw-spin-btn' + (opt.btnClass ? ' ' + opt.btnClass : '') + '"'
           + (opt.btnSize ? ' style="width:' + opt.btnSize + '%"' : '') + ' aria-label="开始抽奖">'
           + (opt.btnText || '抽') + '</button>';
+        /* 先关掉 .lw-stage：按钮与指针都是 absolute + 百分比定位，包含块必须只等于 SVG 本身。
+           底座若留在 stage 内，会把 stage 撑高（height 34 − margin-top 16 = 净 18），
+           使 top:50% 算出的圆心下移约 9px，中心圆就与轮毂环不同心了。 */
+        s += '</div>';
         if (opt.stand) {
           s += '<div class="lw-stand"><span class="lw-base-text">'
             + esc((ctx && ctx.leftText) || '点击中心开始抽奖') + '</span></div>';
         }
-        s += '</div>';
         root.innerHTML = s;
         root.setAttribute('data-slots', String(n));
         /* 异步填充扇区里的奖品图（没有图的奖品保持纯文字） */
