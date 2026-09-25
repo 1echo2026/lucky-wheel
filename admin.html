@@ -377,6 +377,18 @@ td { word-break: break-all; }
         <textarea id="setBases" placeholder="北京&#10;武汉&#10;成都"></textarea>
       </div>
       <div class="field">
+        <label>分享封面图（企业微信/飞书转发链接时的缩略图）</label>
+        <div class="btnrow" style="margin-bottom:10px">
+          <button class="btn" id="uploadCover">上传并发布分享封面</button>
+        </div>
+        <div class="hint" style="margin-bottom:10px">
+          发布到仓库 <b>assets/cover.jpg</b>；企业微信/飞书会按 OG 协议抓取这张图作为转发缩略图。
+          建议用 <b>1.91:1（如 1200×630）</b> 的横图，方形图会被裁切。发布后约 1~10 分钟生效。
+          <br>换图后，如果对方看到的还是旧封面，是对方的客户端缓存——让对方重新打开一次链接或重启企微即可。
+        </div>
+        <input type="file" id="coverFile" accept="image/*" style="display:none">
+      </div>
+      <div class="field">
         <label>活动背景图（所有人可见）</label>
         <div class="btnrow" style="margin-bottom:10px">
           <button class="btn" id="uploadBg">上传并发布背景图</button>
@@ -810,7 +822,7 @@ td { word-break: break-all; }
   });
 
   /* ---------- 背景图（上传后发布到仓库，所有人可见） ---------- */
-  var BG_PATH = 'assets/bg.jpg', BG_BRANCH = 'main';
+  var BG_PATH = 'assets/bg.jpg', COVER_PATH = 'assets/cover.jpg', BG_BRANCH = 'main';
 
   function ghRepo() {
     return ($('setRepo').value || localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel').trim();
@@ -866,20 +878,24 @@ td { word-break: break-all; }
     if (inp) inp.placeholder = has ? '如需更换令牌，粘贴新值再保存' : 'github_pat_... / ghp_...';
   }
 
-  function publishBg(dataURL) {
+  function publishBg(dataURL) { publishAsset(BG_PATH, dataURL, 'chore: 更新活动背景图'); }
+  function publishCover(dataURL) { publishAsset(COVER_PATH, dataURL, 'chore: 更新企业微信分享封面'); }
+
+  /* 把图片发布到仓库指定路径（背景图 assets/bg.jpg / 分享封面 assets/cover.jpg） */
+  function publishAsset(path, dataURL, msg) {
     var token = localStorage.getItem(LS_GH_TOKEN);
     if (!token) { toast('请先填写并保存 GitHub 令牌'); return; }
     var repo = ghRepo();
     if (repo.indexOf('/') < 0) { toast('仓库格式应为 owner/repo'); return; }
     var b64 = dataURL.split(',')[1];
-    var api = 'https://api.github.com/repos/' + repo + '/contents/' + BG_PATH;
+    var api = 'https://api.github.com/repos/' + repo + '/contents/' + path;
     var headers = { 'Authorization': 'Bearer ' + token, 'Accept': 'application/vnd.github+json' };
-    toast('正在发布背景图…');
+    toast('正在发布图片…');
     fetch(api + '?ref=' + BG_BRANCH, { headers: headers })
       .then(function (r) { return r.ok ? r.json() : null; })
       .catch(function () { return null; })
       .then(function (cur) {
-        var body = { message: 'chore: 更新活动背景图', content: b64, branch: BG_BRANCH };
+        var body = { message: msg, content: b64, branch: BG_BRANCH };
         if (cur && cur.sha) body.sha = cur.sha;
         return fetch(api, {
           method: 'PUT',
@@ -888,7 +904,7 @@ td { word-break: break-all; }
         });
       })
       .then(function (r) {
-        if (r.ok) { toast('已发布，约 1~10 分钟后所有人可见'); renderBgPreview(); return; }
+        if (r.ok) { toast('已发布，约 1~10 分钟后全网生效'); renderBgPreview(); return; }
         return r.json().then(function (e) { toast('发布失败：' + (e.message || ('HTTP ' + r.status))); })
           .catch(function () { toast('发布失败：HTTP ' + r.status + '（请检查令牌权限）'); });
       })
@@ -900,6 +916,13 @@ td { word-break: break-all; }
     var f = this.files && this.files[0];
     if (!f) return;
     compressImage(f, function (dataURL) { publishBg(dataURL); }, 1600);
+    this.value = '';
+  });
+  $('uploadCover').addEventListener('click', function () { $('coverFile').click(); });
+  $('coverFile').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    compressImage(f, function (dataURL) { publishCover(dataURL); }, 1600);
     this.value = '';
   });
   $('clearBg').addEventListener('click', function () {
