@@ -255,6 +255,9 @@ td { word-break: break-all; }
 .token-ok { color: #0F7A46; font-weight: 600; }
 .qbar .inline-input { flex: 1 1 150px; min-width: 0; }
 .qbar .btn { flex: 0 0 auto; }
+.fld-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.fld-row .inline-input { flex: 1 1 auto; min-width: 0; min-height: 38px; }
+.fld-row .switch { flex: 0 0 auto; }
 .bg-preview {
   height: 116px; border-radius: 12px; border: 1px solid var(--line-gold);
   background: #FFF9F0;
@@ -264,6 +267,14 @@ td { word-break: break-all; }
   font-size: 12px; color: var(--ink-soft); letter-spacing: .5px; text-align: center; padding: 10px;
 }
 .hidden { display: none !important; }
+/* 修改抽奖记录的浮层 */
+.r-mask {
+  position: fixed; inset: 0; z-index: 80; display: none;
+  align-items: center; justify-content: center; padding: 20px; overflow: auto;
+  background: radial-gradient(120% 80% at 50% 40%, rgba(78,5,9,.72), rgba(20,2,4,.9));
+}
+.r-mask.open { display: flex; }
+.r-mask .gate { margin: 0; }
 </style>
 </head>
 <body>
@@ -338,16 +349,20 @@ td { word-break: break-all; }
           <input type="datetime-local" id="setEnd">
         </div>
       </div>
+      <div class="grid2">
+        <div class="field">
+          <label>问卷标题</label>
+          <input type="text" id="setFormTitle" placeholder="参与问卷">
+        </div>
+        <div class="field">
+          <label>问卷底部说明</label>
+          <input type="text" id="setFormNote" placeholder="问卷信息仅用于本次抽奖核验与兑奖">
+        </div>
+      </div>
       <div class="field">
         <label class="switch"><input type="checkbox" id="setNeedForm"> 参与前需填写问卷</label>
-        <div class="chk-line" id="fieldsChk" style="margin-top:10px">
-          <label class="switch"><input type="checkbox" data-f="name"> 姓名</label>
-          <label class="switch"><input type="checkbox" data-f="base"> 基地</label>
-          <label class="switch"><input type="checkbox" data-f="phone"> 手机号</label>
-          <label class="switch"><input type="checkbox" data-f="gonghao"> 工号</label>
-          <label class="switch"><input type="checkbox" data-f="amount"> 出单金额</label>
-        </div>
-        <div class="hint">手机号用于「一个出单手机号仅可抽一次」校验；工号用于「累计出单金额」判池（同一工号可对应多个出单手机号）</div>
+        <div id="fieldsChk" style="margin-top:10px"></div>
+        <div class="hint">每行可改：是否显示 / 字段名称 / 是否必填。手机号用于「一个出单手机号仅可抽一次」校验；工号用于「累计出单金额」判池</div>
       </div>
       <div class="field">
         <label>抽奖模板（前台外观，保存设置后生效）</label>
@@ -452,7 +467,7 @@ td { word-break: break-all; }
       <div class="hint" id="qSummary" style="margin-bottom:10px">暂无记录</div>
       <div class="tablebox" id="qResultBox">
         <table>
-          <thead><tr><th>期数</th><th>奖池</th><th>抽奖时间</th><th>出单手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品奖项</th></tr></thead>
+          <thead><tr><th>期数</th><th>奖池</th><th>抽奖时间</th><th>出单手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品奖项</th><th>操作</th></tr></thead>
           <tbody id="qBody"></tbody>
         </table>
       </div>
@@ -473,6 +488,29 @@ td { word-break: break-all; }
   </div>
 
   <div class="toast" id="toast"></div>
+
+<!-- 修改抽奖记录 -->
+<div class="r-mask" id="recMask">
+  <div class="gate" style="margin:0;max-width:460px;text-align:left">
+    <h1 style="text-align:center">修改抽奖记录</h1>
+    <div class="sub" style="text-align:center">改完点保存，直接写入本机记录</div>
+    <div class="grid2">
+      <div class="field"><label>期数</label><input type="text" id="eRPeriod"></div>
+      <div class="field"><label>奖池</label><input type="text" id="eRPool"></div>
+      <div class="field"><label>出单手机号</label><input type="text" id="eRPhone"></div>
+      <div class="field"><label>姓名</label><input type="text" id="eRName"></div>
+      <div class="field"><label>基地</label><input type="text" id="eRBase"></div>
+      <div class="field"><label>工号</label><input type="text" id="eRGonghao"></div>
+      <div class="field"><label>出单金额</label><input type="number" id="eRAmount" step="0.01"></div>
+      <div class="field"><label>奖品奖项</label><input type="text" id="eRPrize"></div>
+    </div>
+    <div class="field"><label>抽奖时间</label><input type="datetime-local" id="eRTime"></div>
+    <div class="btnrow">
+      <button class="btn" id="eRSave" style="flex:1">保存</button>
+      <button class="btn ghost" id="eRCancel">取消</button>
+    </div>
+  </div>
+</div>
 </div>
 
 <script src="templates.js"></script>
@@ -499,6 +537,10 @@ td { word-break: break-all; }
       maxDraws: 1,
       needForm: true,
       formFields: { name: true, base: true, phone: true, gonghao: true, amount: true },
+      formTitle: '参与问卷',
+      formNote: '问卷信息仅用于本次抽奖核验与兑奖',
+      formLabels: { name: '真实姓名', base: '所在基地', phone: '出单手机号', gonghao: '工号', amount: '本单出单金额（元）' },
+      formRequired: { name: true, base: true, phone: true, gonghao: true, amount: true },
       baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
       prizes: [
         { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
@@ -532,6 +574,10 @@ td { word-break: break-all; }
       if (c.peakAmount === undefined) c.peakAmount = 20000;
       if (!c.formFields) c.formFields = defaultConfig().formFields;
       if (c.formFields.amount === undefined) c.formFields.amount = true;
+      if (!c.formLabels) c.formLabels = defaultConfig().formLabels;
+      if (!c.formRequired) c.formRequired = defaultConfig().formRequired;
+      if (c.formTitle === undefined) c.formTitle = '参与问卷';
+      if (c.formNote === undefined) c.formNote = '问卷信息仅用于本次抽奖核验与兑奖';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -615,7 +661,11 @@ td { word-break: break-all; }
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
       cb(cv.toDataURL('image/jpeg', 0.8));
     };
-    img.onerror = function () { toast('图片读取失败'); };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      /* 常见于 iPhone 的 HEIC：浏览器解不了，自然画不进 canvas */
+      toast('这张图浏览器读不了（iPhone 的 HEIC 常见），请换 JPG/PNG 再试');
+    };
     img.src = url;
   }
   function getPass() { return localStorage.getItem(LS_PASS) || DEFAULT_PASS; }
@@ -648,6 +698,29 @@ td { word-break: break-all; }
   else if (localStorage.getItem(LS_PASS)) {
     $('gateSub').textContent = '请输入管理密码';
   }
+
+  /* ---------- 问卷字段（显示 / 名称 / 必填） ---------- */
+  var FIELD_DEFS = [
+    { k: 'name', label: '真实姓名' },
+    { k: 'base', label: '所在基地' },
+    { k: 'phone', label: '出单手机号' },
+    { k: 'gonghao', label: '工号' },
+    { k: 'amount', label: '本单出单金额（元）' }
+  ];
+  function buildFieldRows() {
+    var box = $('fieldsChk');
+    if (!box) return;
+    box.innerHTML = '';
+    FIELD_DEFS.forEach(function (d) {
+      var row = document.createElement('div');
+      row.className = 'fld-row';
+      row.innerHTML = '<label class="switch"><input type="checkbox" data-f="' + d.k + '"> 显示</label>'
+        + '<input type="text" class="inline-input" data-l="' + d.k + '" placeholder="' + d.label + '">'
+        + '<label class="switch"><input type="checkbox" data-r="' + d.k + '"> 必填</label>';
+      box.appendChild(row);
+    });
+  }
+  function q(sel) { return document.querySelector('#fieldsChk ' + sel); }
 
   /* ---------- 抽奖模板 ---------- */
   function fillTemplateOptions() {
@@ -683,10 +756,15 @@ td { word-break: break-all; }
     $('setRepo').value = localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel';
     updateTokenState();
     $('setNeedForm').checked = !!cfg.needForm;
-    var ff = cfg.formFields || {};
-    ['name', 'base', 'phone', 'gonghao', 'amount'].forEach(function (f) {
-      var el = document.querySelector('#fieldsChk [data-f="' + f + '"]');
-      if (el) el.checked = (ff[f] !== false);
+    $('setFormTitle').value = cfg.formTitle || '参与问卷';
+    $('setFormNote').value = cfg.formNote || '';
+    buildFieldRows();
+    var ff = cfg.formFields || {}, lb2 = cfg.formLabels || {}, rq2 = cfg.formRequired || {};
+    FIELD_DEFS.forEach(function (d) {
+      var cf = q('[data-f="' + d.k + '"]'), cl = q('[data-l="' + d.k + '"]'), cr = q('[data-r="' + d.k + '"]');
+      if (cf) cf.checked = ff[d.k] !== false;
+      if (cl) cl.value = lb2[d.k] || d.label;
+      if (cr) cr.checked = rq2[d.k] !== false;
     });
     $('setBases').value = (cfg.baseOptions || []).join('\n');
     $('periodBadge').textContent = cfg.period || '未设置期数';
@@ -696,9 +774,12 @@ td { word-break: break-all; }
     renderBgPreview();
   }
   $('saveSetting').addEventListener('click', function () {
-    var ff = {};
-    document.querySelectorAll('#fieldsChk [data-f]').forEach(function (c) {
-      ff[c.getAttribute('data-f')] = c.checked;
+    var ff = {}, fl = {}, fr = {};
+    FIELD_DEFS.forEach(function (d) {
+      var cf = q('[data-f="' + d.k + '"]'), cl = q('[data-l="' + d.k + '"]'), cr = q('[data-r="' + d.k + '"]');
+      ff[d.k] = !!(cf && cf.checked);
+      fl[d.k] = (cl && cl.value.trim()) || d.label;
+      fr[d.k] = !!(cr && cr.checked);
     });
     cfg.period = $('setPeriod').value.trim() || '幸运大转盘';
     cfg.poolName = $('setPoolName').value.trim() || '进阶奖池';
@@ -714,6 +795,10 @@ td { word-break: break-all; }
     cfg.bgUrl = $('setBgUrl').value.trim();
     cfg.needForm = $('setNeedForm').checked;
     cfg.formFields = ff;
+    cfg.formLabels = fl;
+    cfg.formRequired = fr;
+    cfg.formTitle = $('setFormTitle').value.trim() || '参与问卷';
+    cfg.formNote = $('setFormNote').value.trim();
     cfg.baseOptions = $('setBases').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
     saveConfig(cfg);
     localStorage.setItem(LS_GH_REPO, ghRepo());
@@ -944,29 +1029,34 @@ td { word-break: break-all; }
     for (var i = 0; i < 5; i++) {
       (function (slot) {
         var key = id + '::' + slot;
-        var div = document.createElement('div');
+        /* 用 label 包住文件输入：浏览器原生转发点击。
+           之前用 div + click→fileInput.click()，input 的 click 会冒泡回 div 造成重入，
+           选中框时好时坏（这就是“图片传不上去”的主因）。 */
+        var div = document.createElement('label');
         div.className = 'slot';
         div.innerHTML = (slot === 0 ? '<span class="main-tag">主图</span>' : '') + '<span class="ph">＋ 上传</span>';
         var fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
         div.appendChild(fileInput);
-        div.addEventListener('click', function () { fileInput.click(); });
+        fileInput.addEventListener('click', function (ev) { ev.stopPropagation(); });
         fileInput.addEventListener('change', function () {
-          if (!fileInput.files || !fileInput.files[0]) return;
-          compressImage(fileInput.files[0], function (dataURL) {
+          var f = fileInput.files && fileInput.files[0];
+          fileInput.value = '';
+          if (!f) return;
+          compressImage(f, function (dataURL) {
             idbPut(key, dataURL).then(function (ok) {
               if (ok) { toast(slot === 0 ? '主图已保存' : '图片已保存'); renderUploads(id); }
-              else toast('保存失败：浏览器不支持本地存储');
+              else toast('保存失败：本机存储不可用（是否用了无痕模式？）');
             });
           });
-          fileInput.value = '';
         });
         var delBtn = document.createElement('button');
         delBtn.className = 'del';
         delBtn.textContent = '×';
         delBtn.style.display = 'none';
         delBtn.addEventListener('click', function (ev) {
+          ev.preventDefault();   /* 阻止 label 的默认激活（否则会顺带打开选图框） */
           ev.stopPropagation();
           idbDel(key).then(function () { renderUploads(id); });
         });
@@ -1031,16 +1121,19 @@ td { word-break: break-all; }
   function renderQuery() {
     var kw = $('qKeyword').value.trim();
     var pd = $('qPeriod').value;
-    var list = getRecords().slice().reverse();
-    if (pd) list = list.filter(function (r) { return (r.period || '未命名期数') === pd; });
+    var all = getRecords();
+    var list = [];
+    for (var n0 = all.length - 1; n0 >= 0; n0--) list.push({ i: n0, r: all[n0] }); /* 带上原始下标，便于改/删 */
+    if (pd) list = list.filter(function (it) { return (it.r.period || '未命名期数') === pd; });
     if (kw) {
-      list = list.filter(function (r) {
-        return (r.phone || '').indexOf(kw) >= 0 || (r.gonghao || '').indexOf(kw) >= 0;
+      list = list.filter(function (it) {
+        return (it.r.phone || '').indexOf(kw) >= 0 || (it.r.gonghao || '').indexOf(kw) >= 0;
       });
     }
     var tb = $('qBody');
     tb.innerHTML = '';
-    list.forEach(function (r) {
+    list.forEach(function (it) {
+      var r = it.r;
       var tr = document.createElement('tr');
       tr.innerHTML =
         '<td>' + esc(r.period || '-') + '</td>' +
@@ -1050,7 +1143,9 @@ td { word-break: break-all; }
         '<td>' + esc(r.name || '-') + '</td>' +
         '<td>' + esc(r.base || '-') + '</td>' +
         '<td>' + esc(r.gonghao || '-') + '</td>' +
-        '<td>' + esc(r.prize || '-') + '</td>';
+        '<td>' + esc(r.prize || '-') + '</td>' +
+        '<td><button class="btn small ghost" data-rec="edit" data-i="' + it.i + '">改</button> '
+        + '<button class="btn small danger" data-rec="del" data-i="' + it.i + '">删</button></td>';
       tb.appendChild(tr);
     });
     var total = getRecords().length;
@@ -1068,6 +1163,74 @@ td { word-break: break-all; }
     $('qKeyword').value = '';
     $('qPeriod').value = '';
     renderQuery();
+  });
+
+  /* ---------- 修改 / 删除抽奖记录 ---------- */
+  var recEditIdx = -1;
+  function toLocalInput(iso) {
+    if (!iso) return '';
+    var d = new Date(iso), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+      + 'T' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
+  function openRecEdit(i) {
+    var r = getRecords()[i];
+    if (!r) return;
+    recEditIdx = i;
+    $('eRPeriod').value = r.period || '';
+    $('eRPool').value = r.pool || '';
+    $('eRPhone').value = r.phone || '';
+    $('eRName').value = r.name || '';
+    $('eRBase').value = r.base || '';
+    $('eRGonghao').value = r.gonghao || '';
+    $('eRAmount').value = (r.amount === undefined || r.amount === null) ? '' : r.amount;
+    $('eRPrize').value = r.prize || '';
+    $('eRTime').value = toLocalInput(r.submitTime);
+    $('recMask').classList.add('open');
+  }
+  function closeRecEdit() {
+    $('recMask').classList.remove('open');
+    recEditIdx = -1;
+  }
+  function deleteRec(i) {
+    var arr = getRecords();
+    if (!arr[i]) return;
+    if (!confirm('确定删除这条抽奖记录？')) return;
+    arr.splice(i, 1);
+    saveRecords(arr);
+    refreshRecCount();
+    toast('记录已删除');
+  }
+  $('qBody').addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-rec]');
+    if (!b) return;
+    var i = parseInt(b.getAttribute('data-i'), 10);
+    if (b.getAttribute('data-rec') === 'edit') openRecEdit(i);
+    else deleteRec(i);
+  });
+  $('eRCancel').addEventListener('click', closeRecEdit);
+  $('recMask').addEventListener('click', function (ev) {
+    if (ev.target === $('recMask')) closeRecEdit();
+  });
+  $('eRSave').addEventListener('click', function () {
+    var arr = getRecords();
+    var r = arr[recEditIdx];
+    if (!r) { closeRecEdit(); return; }
+    r.period = $('eRPeriod').value.trim();
+    r.pool = $('eRPool').value.trim();
+    r.phone = $('eRPhone').value.trim();
+    r.name = $('eRName').value.trim();
+    r.base = $('eRBase').value.trim();
+    r.gonghao = $('eRGonghao').value.trim();
+    var am = parseFloat($('eRAmount').value);
+    if (!isNaN(am)) r.amount = am;
+    r.prize = $('eRPrize').value.trim();
+    var tv = $('eRTime').value;
+    if (tv) r.submitTime = new Date(tv).toISOString();
+    saveRecords(arr);
+    closeRecEdit();
+    refreshRecCount();
+    toast('记录已修改');
   });
 
   /* ---------- 数据工具 ---------- */

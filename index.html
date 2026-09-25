@@ -201,6 +201,19 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   box-shadow: inset 0 1px 0 #FFFFFF, 0 3px 8px rgba(78,5,9,.08);
 }
 .who::before { content: '✦'; color: var(--gold-500); flex: 0 0 auto; }
+/* 身份胶囊 + 再次填写 */
+.who-row { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.who-row .who { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
+.again-btn {
+  flex: 0 0 auto; padding: 9px 14px; border-radius: 999px; cursor: pointer;
+  font-family: inherit; font-size: 13px; font-weight: 700; letter-spacing: .4px; white-space: nowrap;
+  color: var(--red-700); background: linear-gradient(180deg, #FFFFFF, #FFF7E8);
+  border: 1px solid rgba(210,165,68,.6);
+  box-shadow: inset 0 1px 0 #FFFFFF, 0 3px 8px rgba(78,5,9,.08);
+  transition: transform .12s ease, filter .18s;
+}
+.again-btn:hover { filter: brightness(1.03); }
+.again-btn:active { transform: translateY(1px); }
 
 .wheel-area { position: relative; width: min(330px, 86vw); margin: 16px auto 0; }
 /* 转盘背后的暖金光晕：在暖白卡面上轻轻托起转盘 */
@@ -450,7 +463,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
   <!-- 转盘 -->
   <section class="card hero" id="wheelCard">
-    <div class="who" id="whoBanner">已参与 · 点击中心「抽」开始转盘</div>
+    <div class="who-row">
+      <div class="who" id="whoBanner">已参与 · 点击中心「抽」开始转盘</div>
+      <button type="button" class="again-btn" id="againBtn">再次填写</button>
+    </div>
 
     <div class="wheel-area" id="wheelArea">
       <!-- 转盘外观由 templates.js 的抽奖模板渲染（后台可切换模板） -->
@@ -525,7 +541,11 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       bgUrl: '',
       maxDraws: 1,
       needForm: true,
+      formTitle: '参与问卷',
+      formNote: '问卷信息仅用于本次抽奖核验与兑奖',
       formFields: { name: true, base: true, phone: true, gonghao: true, amount: true },
+      formLabels: { name: '真实姓名', base: '所在基地', phone: '出单手机号', gonghao: '工号', amount: '本单出单金额（元）' },
+      formRequired: { name: true, base: true, phone: true, gonghao: true, amount: true },
       baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
       prizes: [
         { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
@@ -560,6 +580,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       if (c.peakAmount === undefined) c.peakAmount = 20000;
       if (!c.formFields) c.formFields = defaultConfig().formFields;
       if (c.formFields.amount === undefined) c.formFields.amount = true;
+      if (!c.formLabels) c.formLabels = defaultConfig().formLabels;
+      if (!c.formRequired) c.formRequired = defaultConfig().formRequired;
+      if (c.formTitle === undefined) c.formTitle = '参与问卷';
+      if (c.formNote === undefined) c.formNote = '问卷信息仅用于本次抽奖核验与兑奖';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -686,13 +710,31 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   }
 
   /* ---------- 问卷 ---------- */
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  var FIELD_KEYS = ['name', 'base', 'phone', 'gonghao', 'amount'];
+  /* 字段标题/是否必填/是否显示都由后台配置驱动 */
+  function applyFieldMeta() {
+    var ff = cfg.formFields || {}, lb = cfg.formLabels || {}, rq = cfg.formRequired || {};
+    FIELD_KEYS.forEach(function (k) {
+      var box = $('f_' + k);
+      if (!box) return;
+      box.classList.toggle('hidden', !ff[k]);
+      var lab = box.querySelector('label');
+      if (lab) lab.innerHTML = esc(lb[k] || '') + (rq[k] ? ' <em>*</em>' : '');
+    });
+    var h2 = $('formCard').querySelector('h2');
+    if (h2) h2.textContent = cfg.formTitle || '参与问卷';
+    var note = $('formCard').querySelector('.note');
+    if (note && cfg.formNote !== undefined) note.textContent = cfg.formNote;
+  }
+
   function buildForm() {
     var ff = cfg.formFields || {};
-    $('f_name').classList.toggle('hidden', !ff.name);
-    $('f_base').classList.toggle('hidden', !ff.base);
-    $('f_phone').classList.toggle('hidden', !ff.phone);
-    $('f_gonghao').classList.toggle('hidden', !ff.gonghao);
-    $('f_amount').classList.toggle('hidden', !ff.amount);
+    applyFieldMeta();
     var sel = $('inpBase');
     sel.innerHTML = '';
     (cfg.baseOptions && cfg.baseOptions.length ? cfg.baseOptions : ['北京']).forEach(function (b) {
@@ -701,6 +743,21 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       sel.appendChild(o);
     });
   }
+  /* 再次填写：回到问卷，保留姓名/基地（同一人常填多单），清掉本单相关字段 */
+  $('againBtn').addEventListener('click', function () {
+    who = null;
+    $('inpPhone').value = '';
+    $('inpGonghao').value = '';
+    $('inpAmount').value = '';
+    hideErr();
+    applyFieldMeta();
+    $('wheelCard').classList.add('hidden');
+    $('formCard').classList.remove('hidden');
+    renderStage();   /* 身份清空后回到默认奖池 */
+    bindSpin();
+    $('formCard').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'start' });
+  });
+
   function showErr(msg) { var e = $('formErr'); e.textContent = msg; e.style.display = 'block'; }
   function hideErr() { $('formErr').style.display = 'none'; }
 
@@ -715,12 +772,14 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     if (isNaN(amount)) amount = 0;
 
     if (!inTimeWindow()) return showErr(isExpired() ? '本期抽奖已截止，敬请关注下期活动' : '活动尚未开始，敬请期待');
-    if (ff.name && !name) return showErr('请填写真实姓名');
-    if (ff.base && !base) return showErr('请选择所在基地');
-    if (ff.gonghao && !gonghao) return showErr('请填写工号');
-    if (ff.amount && !(amount > 0)) return showErr('请填写本单出单金额');
+    var rq = cfg.formRequired || {}, lb = cfg.formLabels || {};
+    if (ff.name && rq.name !== false && !name) return showErr('请填写' + (lb.name || '真实姓名'));
+    if (ff.base && rq.base !== false && !base) return showErr('请选择' + (lb.base || '所在基地'));
+    if (ff.gonghao && rq.gonghao !== false && !gonghao) return showErr('请填写' + (lb.gonghao || '工号'));
+    if (ff.amount && rq.amount !== false && !(amount > 0)) return showErr('请填写' + (lb.amount || '本单出单金额'));
     if (ff.phone) {
-      if (!/^\d{11}$/.test(phone)) { showTip('请检查您输入的手机号是否有误'); return; }
+      if (!phone && rq.phone !== false) return showErr('请填写' + (lb.phone || '出单手机号'));
+      if (phone && !/^\d{11}$/.test(phone)) { showTip('请检查您输入的手机号是否有误'); return; }
     } else { phone = ''; }
 
     /* 出单金额门槛：不足最低金额不具备抽奖资格 */

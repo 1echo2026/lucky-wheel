@@ -665,6 +665,14 @@
       lights: true,
       pointerWidth: 12,
       shade: 'dark',
+      /* 也支持扇区奖品图：为腾出图片位置，标签收短到 3 字并略缩小
+         （径向：轮毂外线58.5 < 标签60~96 < 图片99~137 < 扇区边140） */
+      images: true,
+      fontSize: 12,
+      labelLen: 3,
+      textR: 96,
+      imgR: 118,
+      imgSize: 38,
       btnClass: ''
     }),
     /* 转盘 · 节庆橙（参考设计：扇区内显示奖品图 + 橙色立体按钮 + 底座剩余次数） */
