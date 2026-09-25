@@ -95,6 +95,23 @@
     'box-shadow:0 8px 18px rgba(190,70,30,.28);}',
     '.lw-base-text{color:#FFFFFF;font-size:12px;font-weight:700;letter-spacing:.5px;',
     'text-shadow:0 1px 2px rgba(170,60,20,.55);white-space:nowrap;}',
+    /* 九宫格 · 节庆橙：橙色粗框 + 白点铆钉 + 白底圆角格 + 中心 GO 格 */
+    '.lw-gcell-body{fill:#FFFFFF;stroke:#B03A2E;stroke-width:2;}',
+    '.lw-gcell.on .lw-gcell-body{fill:#FFF3D6;stroke:#F0601A;stroke-width:3;}',
+    '.lw-gcell-glow{fill:none;stroke:#FFC24A;stroke-width:0;}',
+    '.lw-gcell.on .lw-gcell-glow{stroke-width:7;opacity:.85;}',
+    '.lw-gcell-name{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;font-weight:700;fill:#5A2A18;}',
+    '.lw-gcell.on .lw-gcell-name{fill:#C0392B;}',
+    '.lw-gcell.win .lw-gcell-glow{animation:lwGridPulse .45s ease-in-out 5 alternate;}',
+    '.lw-spin-btn--gocell{border-radius:16px;border:2px solid #E08A1E;',
+    'background:linear-gradient(180deg,#FFF0C8 0%,#FFD98A 45%,#FFA53C 100%);color:#7A3A12;',
+    'display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;',
+    'font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;',
+    'box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 4px 12px rgba(200,120,20,.3);}',
+    '.lw-spin-btn--gocell .go-go{font-size:24px;font-weight:900;color:#F0601A;line-height:1;letter-spacing:1px;}',
+    '.lw-spin-btn--gocell .go-sub{font-size:12px;font-weight:800;color:#7A3A12;}',
+    '.lw-spin-btn--gocell .go-times{font-size:11px;font-weight:600;color:#9A6B3A;}',
+    '.lw-spin-btn--gocell:hover:not(:disabled){filter:brightness(1.04);}',
     '@media (max-width:360px){.lw-spin-btn{font-size:22px;}}'
   ].join('');
 
@@ -158,6 +175,12 @@
     + '<linearGradient id="lwPtrFest" x1="0" y1="0" x2="0" y2="1">'
     + '<stop offset="0%" stop-color="#FF8A5B"/><stop offset="60%" stop-color="#EE3B25"/>'
     + '<stop offset="100%" stop-color="#C81F12"/></linearGradient>'
+    + '<linearGradient id="lwGFrame" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="#FFB03A"/><stop offset="52%" stop-color="#FF8A1F"/>'
+    + '<stop offset="100%" stop-color="#F2700A"/></linearGradient>'
+    + '<linearGradient id="lwGoCell" x1="0" y1="0" x2="0" y2="1">'
+    + '<stop offset="0%" stop-color="#FFF0C8"/><stop offset="45%" stop-color="#FFD98A"/>'
+    + '<stop offset="100%" stop-color="#FFA53C"/></linearGradient>'
     + '</defs></svg>';
 
   function inject() {
@@ -514,11 +537,115 @@
     };
   }
 
+  /* ---------------- 九宫格 · 节庆橙（按参考设计） ----------------
+ * 橙色粗框 + 白点铆钉 + 白底圆角格（奖品图在上、奖项名在下）+ 中心 GO 格（立即抽奖 / 共N次）。
+ * 几何：框内 30~290，格 82、缝 7，中心格 (119,119)-(201,201) 正好是 50% 位置。 */
+  function makeGridFest(opt) {
+    return {
+      id: opt.id,
+      name: opt.name,
+      slots: 8,
+      render: function (root, prizes, ctx) {
+        var n = Math.min(prizes.length, 8);
+        var PAD = 30, CELL = 82, STEP = 89;
+        var i;
+        var s = '<div class="lw-stage">';
+        s += '<svg class="lw-grid" viewBox="0 0 320 320" role="img" aria-label="九宫格抽奖">';
+
+        /* 橙色外框 + 内外描边 + 白点铆钉 */
+        s += '<rect x="0" y="0" width="320" height="320" rx="34" fill="url(#lwGFrame)"></rect>';
+        s += '<rect x="4" y="4" width="312" height="312" rx="30" fill="none" stroke="rgba(255,255,255,.38)" stroke-width="1.6"></rect>';
+        s += '<rect x="9" y="9" width="302" height="302" rx="26" fill="none" stroke="rgba(150,60,0,.26)" stroke-width="1.2"></rect>';
+        var dots = [], k;
+        for (k = 0; k < 5; k++) dots.push([48 + k * 56, 16], [48 + k * 56, 304]);
+        for (k = 0; k < 3; k++) dots.push([16, 112 + k * 48], [304, 112 + k * 48]);
+        for (i = 0; i < dots.length; i++) {
+          s += '<circle cx="' + dots[i][0] + '" cy="' + dots[i][1] + '" r="' + (i % 2 ? 3.2 : 4.6)
+            + '" fill="#FFFFFF" opacity="' + (i % 3 ? .95 : .78) + '"></circle>';
+        }
+
+        /* 8 个奖品格：白底圆角 + 暗红细边，上奖品图、下奖项名 */
+        for (i = 0; i < 8; i++) {
+          var col = GRID_POS[i][0], row = GRID_POS[i][1];
+          var x = PAD + col * STEP, y = PAD + row * STEP;
+          var cx = x + CELL / 2, cy = y + CELL / 2;
+          var label = i < n ? shortLabel(prizes[i].name, 5) : '—';
+          s += '<g class="lw-gcell" data-i="' + i + '">'
+            + '<rect class="lw-gcell-glow" x="' + (x - 3) + '" y="' + (y - 3) + '" width="' + (CELL + 6)
+            + '" height="' + (CELL + 6) + '" rx="17"></rect>'
+            + '<rect class="lw-gcell-body" x="' + x + '" y="' + y + '" width="' + CELL + '" height="' + CELL
+            + '" rx="14"></rect>'
+            + '<g class="lw-gimg" data-img="' + i + '" transform="translate(' + cx + ' ' + (cy - 14) + ')"></g>'
+            + '<text class="lw-gcell-name" x="' + cx + '" y="' + (cy + 26) + '" text-anchor="middle" font-size="12">'
+            + esc(label) + '</text></g>';
+        }
+        s += '</svg>';
+
+        /* 中心 GO 格（HTML 按钮，正好落在中心格上） */
+        var times = (ctx && ctx.leftCount !== undefined) ? ctx.leftCount : '';
+        s += '<button type="button" class="lw-spin-btn lw-spin-btn--gocell" style="width:25.5%" aria-label="开始抽奖">'
+          + '<span class="go-go">GO</span><span class="go-sub">立即抽奖</span>'
+          + '<span class="go-times">共 ' + times + ' 次</span></button>';
+        s += '</div>';
+        root.innerHTML = s;
+        root.setAttribute('data-slots', String(Math.max(n, 1)));
+
+        /* 异步填奖品图；没有图的格子只显示奖项名 */
+        if (ctx && typeof ctx.getImage === 'function') {
+          for (i = 0; i < n; i++) {
+            (function (idx) {
+              var box = root.querySelector('.lw-gimg[data-img="' + idx + '"]');
+              if (!box) return;
+              ctx.getImage(prizes[idx]).then(function (src) {
+                if (!src) return;
+                box.innerHTML = '<image href="' + src + '" x="-20" y="-20" width="40" height="40"'
+                  + ' preserveAspectRatio="xMidYMid meet"></image>';
+              })['catch'](function () { /* 取图失败就保持纯文字 */ });
+            })(i);
+          }
+        }
+      },
+      spin: function (root, index, onDone) {
+        var stage = root.querySelector('.lw-stage');
+        var cells = root.querySelectorAll('.lw-gcell');
+        var total = cells.length || 8;
+        var target = Math.min(Math.max(index, 0), total - 1);
+        var steps = 4 * total + target;
+        var still = reduceMotion();
+        var k = 0, c;
+        for (c = 0; c < cells.length; c++) cells[c].classList.remove('win');
+        if (stage) stage.classList.add('spinning');
+        function paint() {
+          for (var i = 0; i < cells.length; i++) cells[i].classList.toggle('on', i === (k % total));
+        }
+        function finish() {
+          if (stage) stage.classList.remove('spinning');
+          if (cells[target] && !still) cells[target].classList.add('win');
+          onDone();
+        }
+        if (still) {
+          k = steps;
+          paint();
+          setTimeout(finish, 300);
+          return;
+        }
+        function step() {
+          paint();
+          k++;
+          if (k > steps) { setTimeout(finish, 320); return; }
+          var t = k / steps;
+          setTimeout(step, 55 + 250 * t * t); /* 逐渐减速 */
+        }
+        step();
+      }
+    };
+  }
+
   var VOID_DARK = { f: '#EADCC4', t: INK, h: HALO_LIGHT };
   var VOID_LIGHT = { f: '#F1E3CE', t: INK, h: HALO_LIGHT };
 
   var TEMPLATES = [
-    /* 丙（默认）：四色红 + 细金线 + 金珠串 + 立体光影，最精致的一款 */
+    /* 转盘 · 珍藏红金（国潮款） */
     makeWheel({
       id: 'wheel-bing',
       name: '大转盘 · 珍藏红金',
@@ -537,51 +664,11 @@
       shade: 'dark',
       btnClass: ''
     }),
-    /* 甲：双色高对比 + 略宽金线，远看更醒目 */
-    makeWheel({
-      id: 'wheel-jia',
-      name: '大转盘 · 浓烈红',
-      base: '#7A0A12',
-      tones: [
-        { f: '#D42A34', t: '#FFF6DA' },
-        { f: '#7A0A12', t: GOLD_200 }
-      ],
-      voidTone: VOID_DARK,
-      stroke: { color: 'rgba(255,246,218,.7)', width: 2.2 },
-      beads: false,
-      lights: true,
-      pointerWidth: 13,
-      shade: 'dark',
-      btnClass: ''
-    }),
-    /* 乙：宣纸底 + 淡朱红 + 细金线，雅致款 */
-    makeWheel({
-      id: 'wheel-yi',
-      name: '大转盘 · 宣纸简金',
-      base: PAPER_2,
-      tones: [
-        { f: PAPER, t: INK },
-        { f: PAPER_2, t: RED_700 }
-      ],
-      voidTone: VOID_LIGHT,
-      stroke: { color: 'rgba(210,165,68,.5)', width: 1.2 },
-      beads: true,
-      lights: false,
-      pointerWidth: 10,
-      shade: 'light',
-      btnClass: 'lw-spin-btn--line'
-    }),
-    makeGrid({
-      id: 'grid-red',
-      name: '九宫格 · 国潮',
-      btnClass: ''
-    }),
-    /* 节庆橙：按参考设计做的展示款 —— 浅暖扇区 + 扇区内奖品小图 + 橙色立体中心按钮 + 底座剩余次数 */
+    /* 转盘 · 节庆橙（参考设计：扇区内显示奖品图 + 橙色立体按钮 + 底座剩余次数） */
     makeWheel({
       id: 'wheel-festive',
       name: '大转盘 · 节庆橙（参考设计）',
       base: '#FFE8D8',
-      /* 扇区：比页面暖白底更有色彩，白分隔线才看得出来 */
       tones: [
         { f: '#FFF0E4', t: '#E24A2E', h: 'rgba(255,255,255,.95)' },
         { f: '#FFD9C4', t: '#D93A22', h: 'rgba(255,255,255,.95)' }
@@ -592,7 +679,7 @@
       lights: true,
       ringGrad: 'lwRingFest',
       shade: 'light',
-      /* 径向占位（viewBox 半径 140）：中心按钮半径≈41.6 < 轮毂 46 < 标签内端 54 < 标签外端 90 < 奖品图 92~136 < 扇区边 140 */
+      /* 径向占位（半径140）：按钮≈41.6 < 轮毂46(外线52.5) < 标签内端54 < 标签外端90 < 奖品图92~136 < 扇区边140 */
       hubR: 46,
       btnSize: 26,
       fontSize: 12,
@@ -607,6 +694,17 @@
       stand: true,
       btnText: '点击<br>抽奖',
       btnClass: 'lw-spin-btn--fest'
+    }),
+    /* 九宫格 · 国潮（朱红漆格） */
+    makeGrid({
+      id: 'grid-red',
+      name: '九宫格 · 国潮',
+      btnClass: ''
+    }),
+    /* 九宫格 · 节庆橙（参考设计：橙框白点 + 白底圆角格 + 上图下文 + 中心 GO 格） */
+    makeGridFest({
+      id: 'grid-festive',
+      name: '九宫格 · 节庆橙（参考设计）'
     })
   ];
 

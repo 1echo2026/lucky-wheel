@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#7A0A12">
+<meta name="theme-color" content="#FFF9F0">
 <title>幸运大转盘 · 宠粉日</title>
 <style>
 /* ============================================================
@@ -179,37 +179,35 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 }
 .note { text-align: center; font-size: 12px; color: var(--ink-soft); margin-top: 12px; letter-spacing: .4px; }
 
-/* ---------------- 转盘（红底金环 · 主视觉） ---------------- */
+/* ---------------- 转盘（暖白底金环 · 主视觉） ---------------- */
 .hero {
   background:
-    radial-gradient(118% 76% at 50% -14%, #B4171F 0%, #8A0D15 46%, #4E060A 100%);
-  border-color: rgba(242,210,136,.55);
+    radial-gradient(120% 82% at 50% -12%, #FFFDF9 0%, #FBF3E4 52%, #F5E8D2 100%);
+  border-color: rgba(210,165,68,.6);
   box-shadow:
-    0 18px 44px rgba(40,2,5,.5),
-    inset 0 1px 0 rgba(255,246,218,.26),
-    inset 0 0 64px rgba(0,0,0,.32);
+    0 12px 32px rgba(78,5,9,.16),
+    inset 0 1px 0 rgba(255,255,255,.9);
   padding: 18px 16px 16px;
   overflow: hidden;
 }
-.hero::after { border-color: rgba(242,210,136,.2); }
+.hero::after { border-color: rgba(210,165,68,.28); }
 .who {
   display: flex; align-items: center; gap: 8px; justify-content: center;
-  font-size: 13px; color: var(--gold-100); letter-spacing: .4px;
-  background: linear-gradient(180deg, rgba(255,246,218,.16), rgba(255,246,218,.05));
-  border: 1px solid rgba(242,210,136,.5);
+  font-size: 13px; color: var(--red-700); letter-spacing:.4px;
+  background: linear-gradient(180deg, #FFFFFF, #FFF7E8);
+  border: 1px solid rgba(210,165,68,.6);
   border-radius: 999px; padding: 8px 16px; margin-bottom: 16px;
   text-align: center; line-height: 1.5;
-  box-shadow: inset 0 1px 0 rgba(255,246,218,.24), 0 4px 12px rgba(0,0,0,.24);
-  text-shadow: 0 1px 4px rgba(0,0,0,.35);
+  box-shadow: inset 0 1px 0 #FFFFFF, 0 3px 8px rgba(78,5,9,.08);
 }
-.who::before { content: '✦'; color: var(--gold-300); flex: 0 0 auto; }
+.who::before { content: '✦'; color: var(--gold-500); flex: 0 0 auto; }
 
 .wheel-area { position: relative; width: min(330px, 86vw); margin: 16px auto 0; }
-/* 转盘背后的暖金光晕：把转盘从深红卡面里托起来 */
+/* 转盘背后的暖金光晕：在暖白卡面上轻轻托起转盘 */
 .wheel-area::before {
   content: ''; position: absolute; inset: -9% -7%; border-radius: 50%;
   pointer-events: none;
-  background: radial-gradient(closest-side, rgba(233,196,104,.24), rgba(233,196,104,.07) 60%, transparent 78%);
+  background: radial-gradient(closest-side, rgba(210,165,68,.2), rgba(210,165,68,.06) 60%, transparent 78%);
 }
 /* 转盘内部的扇区/灯珠/指针/中心按钮样式已移入 templates.js（模板自带样式，
    以便后台预览也能正确显示）。这里只保留转盘容器尺寸。 */
@@ -217,17 +215,17 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 .status-row {
   display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
   margin-top: 18px; padding: 12px 14px; border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255,246,218,.13), rgba(255,246,218,.05));
-  border: 1px solid rgba(242,210,136,.3);
-  box-shadow: inset 0 1px 0 rgba(255,246,218,.16);
-  font-size: 12px; color: rgba(255,246,218,.78); letter-spacing: .4px;
+  background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(255,247,232,.5));
+  border: 1px solid rgba(210,165,68,.45);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.8);
+  font-size: 12px; color: var(--ink-soft); letter-spacing: .4px;
 }
 .status-row .left, .status-row .right { line-height: 1.65; }
-.status-row .left b { font-family: var(--font-serif); font-size: 15px; color: var(--gold-200); }
-.status-row .mid { text-align: center; padding: 0 10px; border-left: 1px solid rgba(242,210,136,.25); border-right: 1px solid rgba(242,210,136,.25); }
+.status-row .left b { font-family: var(--font-serif); font-size: 15px; color: var(--red-700); }
+.status-row .mid { text-align: center; padding: 0 10px; border-left: 1px solid rgba(210,165,68,.35); border-right: 1px solid rgba(210,165,68,.35); }
 .status-row .mid b {
   display: block; font-family: var(--font-serif); font-size: 24px; line-height: 1.25;
-  color: var(--gold-200); text-shadow: 0 1px 8px rgba(233,196,104,.45);
+  color: var(--red-600);
 }
 .status-row .right { text-align: right; }
 
@@ -802,19 +800,27 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     });
   }
 
+  function leftCount() {
+    return who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
+  }
   function baseLeftText() {
-    var left = who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
+    var left = leftCount();
     return left > 0 ? '你还可以抽奖 ' + left + ' 次' : '本期抽奖次数已用完';
   }
+  /* 同步模板里的剩余次数：转盘是底座文字，九宫格是中心 GO 格的「共N次」 */
   function updateBaseText() {
-    var el = $('wheelArea').querySelector('.lw-base-text');
+    var root = $('wheelArea');
+    var el = root.querySelector('.lw-base-text');
     if (el) el.textContent = baseLeftText();
+    var go = root.querySelector('.go-times');
+    if (go) go.textContent = '共 ' + leftCount() + ' 次';
   }
 
   function renderStage() {
     tpl.render($('wheelArea'), activePrizes(), {
       getImage: prizeImage,
-      leftText: baseLeftText()
+      leftText: baseLeftText(),
+      leftCount: leftCount()
     });
   }
 
@@ -836,6 +842,9 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     var b = spinBtnEl();
     if (!b) return;
     b.disabled = true;
+    /* 九宫格的中心 GO 格：不替换整块内容，只改「共N次」那一行 */
+    var go = b.querySelector('.go-times');
+    if (go) { go.textContent = label === '已截止' ? '已截止' : '已抽完'; return; }
     b.textContent = label || '已用完';
     if (label) b.removeAttribute('data-state');
     else b.setAttribute('data-state', 'used');
