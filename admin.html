@@ -1,0 +1,659 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>活动管理后台 · 幸运大转盘</title>
+<style>
+:root {
+  --brand: #0FDC78;
+  --brand-strong: #02743B;
+  --brand-soft: #E5FFF2;
+  --brand-on: #004D26;
+  --text: #1a1a1a;
+  --text-muted: #6b6b76;
+  --border: #e3e3e8;
+  --surface: #ffffff;
+  --surface-muted: #f5f5f7;
+  --danger: #E8463A;
+  --danger-soft: #FDECEA;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: var(--surface-muted); min-height: 100vh; color: var(--text);
+}
+.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 56px; }
+.topbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  margin-bottom: 16px; flex-wrap: wrap;
+}
+.topbar h1 { font-size: 20px; }
+.topbar .sub { font-size: 12px; color: var(--text-muted); }
+.topbar .period {
+  border: 1px solid var(--brand); color: var(--brand-strong);
+  border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: 600;
+}
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 14px; padding: 18px; margin-bottom: 14px;
+}
+.card h2 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
+.card .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.field input[type=text], .field input[type=number], .field input[type=datetime-local], .field input[type=password], .field textarea, .field select {
+  width: 100%; min-height: 40px; padding: 8px 12px; font-size: 14px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted);
+  color: var(--text); outline: none; font-family: inherit;
+}
+.field textarea { resize: vertical; min-height: 64px; }
+.field input:focus, .field textarea:focus { border-color: var(--brand); background: #fff; }
+.hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+.btn {
+  height: 42px; padding: 0 20px; border: none; border-radius: 10px;
+  background: var(--brand); color: var(--brand-on);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+.btn:active { transform: scale(.98); }
+.btn.ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-weight: 500; }
+.btn.danger { background: var(--surface); border: 1px solid var(--danger); color: var(--danger); }
+.btn.small { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
+.btnrow { display: flex; gap: 10px; flex-wrap: wrap; }
+.switch {
+  display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+  font-size: 13px; user-select: none; color: var(--text-muted);
+}
+.switch input { width: 16px; height: 16px; accent-color: var(--brand-strong); cursor: pointer; }
+.chk-line { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+/* 奖品列表 */
+.prize-row {
+  display: flex; align-items: center; gap: 12px;
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 10px 14px; margin-bottom: 10px; background: var(--surface);
+}
+.prize-row.active { border-color: var(--brand); background: var(--brand-soft); }
+.prize-row .thumb {
+  width: 42px; height: 42px; border-radius: 8px; flex: 0 0 auto;
+  background: var(--surface-muted); border: 1px dashed var(--border);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; color: var(--text-muted); font-size: 11px;
+}
+.prize-row .thumb img { width: 100%; height: 100%; object-fit: cover; }
+.prize-row .info { flex: 1 1 auto; min-width: 0; }
+.prize-row .info .n {
+  font-size: 14px; font-weight: 600; white-space: nowrap;
+  overflow: hidden; text-overflow: ellipsis;
+}
+.prize-row .info .m { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.prize-row .acts { flex: 0 0 auto; display: flex; gap: 8px; }
+/* 上传槽 */
+.upload-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.slot {
+  position: relative; width: 86px; height: 86px; border-radius: 12px;
+  border: 1px dashed var(--border); background: var(--surface-muted);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; cursor: pointer; color: var(--text-muted); font-size: 12px;
+}
+.slot img { width: 100%; height: 100%; object-fit: cover; }
+.slot .main-tag {
+  position: absolute; top: 4px; left: 4px; z-index: 2;
+  background: var(--brand); color: var(--brand-on);
+  font-size: 10px; padding: 1px 6px; border-radius: 999px; font-weight: 700;
+}
+.slot .del {
+  position: absolute; top: 4px; right: 4px; z-index: 2;
+  width: 18px; height: 18px; border: none; border-radius: 50%;
+  background: rgba(0,0,0,.5); color: #fff; font-size: 11px;
+  line-height: 18px; cursor: pointer; text-align: center; padding: 0;
+}
+.slot input[type=file] { display: none; }
+/* 数据表 */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+th { color: var(--text-muted); font-weight: 500; }
+td { word-break: break-all; }
+.tablebox { max-height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+/* 密码门 */
+.gate {
+  max-width: 360px; margin: 14vh auto 0; background: var(--surface);
+  border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px;
+  text-align: center;
+}
+.gate h1 { font-size: 18px; margin-bottom: 4px; }
+.gate .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+.gate .err {
+  display: none; color: var(--danger); font-size: 13px; margin-bottom: 12px;
+  background: var(--danger-soft); border: 1px solid #F6C8C4;
+  border-radius: 10px; padding: 8px 12px;
+}
+.toast {
+  position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
+  background: rgba(0,0,0,.78); color: #fff; font-size: 13px;
+  padding: 9px 18px; border-radius: 999px; z-index: 99;
+  display: none; white-space: nowrap;
+}
+.footerlink { text-align: center; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
+.footerlink a { color: var(--text-muted); }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- 密码门 -->
+  <div class="gate" id="gate">
+    <h1>活动管理后台</h1>
+    <div class="sub" id="gateSub">请输入管理密码（默认 admin888，可登录后修改）</div>
+    <div class="err" id="gateErr"></div>
+    <div class="field">
+      <input type="password" id="gatePass" placeholder="管理密码" autocomplete="off">
+    </div>
+    <button class="btn" id="gateBtn" style="width:100%">进入后台</button>
+    <div class="hint" style="margin-top:12px"><a href="index.html" style="color:var(--text-muted)">← 返回活动页</a></div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="main" class="hidden">
+    <div class="topbar">
+      <div>
+        <h1>活动管理后台</h1>
+        <div class="sub">配置与记录保存在本机浏览器 · 换设备需重新配置或移配置</div>
+      </div>
+      <span class="period" id="periodBadge">未设置期数</span>
+    </div>
+
+    <!-- 活动设置 -->
+    <div class="card">
+      <h2>活动设置 <button class="btn small" id="saveSetting">保存设置</button></h2>
+      <div class="sub">期数名称会同步显示在活动页顶部</div>
+      <div class="grid2">
+        <div class="field">
+          <label>期数名称</label>
+          <input type="text" id="setPeriod" placeholder="如 宠粉日第 88 期">
+        </div>
+        <div class="field">
+          <label>每人抽奖次数</label>
+          <input type="number" id="setMaxDraws" min="1" max="99" value="1">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>活动开始时间（留空不限）</label>
+          <input type="datetime-local" id="setStart">
+        </div>
+        <div class="field">
+          <label>活动结束时间（留空不限）</label>
+          <input type="datetime-local" id="setEnd">
+        </div>
+      </div>
+      <div class="field">
+        <label class="switch"><input type="checkbox" id="setNeedForm"> 参与前需填写问卷</label>
+        <div class="chk-line" id="fieldsChk" style="margin-top:10px">
+          <label class="switch"><input type="checkbox" data-f="name"> 姓名</label>
+          <label class="switch"><input type="checkbox" data-f="base"> 基地</label>
+          <label class="switch"><input type="checkbox" data-f="phone"> 手机号</label>
+          <label class="switch"><input type="checkbox" data-f="gonghao"> 工号</label>
+        </div>
+        <div class="hint">手机号用于「一手机号限抽一次」校验，中奖记录按手机号核对</div>
+      </div>
+      <div class="field">
+        <label>基地选项（每行一个）</label>
+        <textarea id="setBases" placeholder="北京&#10;武汉&#10;成都"></textarea>
+      </div>
+      <div class="field">
+        <label>修改管理密码</label>
+        <div class="btnrow">
+          <input type="password" id="newPass" placeholder="新密码（留空不修改）" style="flex:1;min-width:160px">
+          <button class="btn ghost" id="changePass">修改</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 奖品管理 -->
+    <div class="card">
+      <h2>奖品列表 <button class="btn small" id="addPrize">＋ 新增奖品</button></h2>
+      <div class="sub">转盘格数随奖品数自动变化（建议 2~10 个，最多取前 10 个），概率之和建议等于 100</div>
+      <div id="prizeList"></div>
+    </div>
+
+    <div class="card" id="editCard">
+      <h2 id="editTitle">编辑奖品</h2>
+      <div class="sub" id="editSub"></div>
+      <div class="grid2">
+        <div class="field">
+          <label>奖项名称</label>
+          <input type="text" id="pName" placeholder="如 一等奖 · 双开门冰箱">
+        </div>
+        <div class="field">
+          <label>中奖概率（% ，谢谢参与也要设）</label>
+          <input type="number" id="pProb" min="0" max="100" step="0.1" placeholder="如 5">
+        </div>
+      </div>
+      <div class="field">
+        <label>库存数量（留空 = 不限，抽完自动移出奖池）</label>
+        <input type="number" id="pStock" min="0" placeholder="留空不限">
+      </div>
+      <div class="field">
+        <label>奖品图片（最多 5 张，第 1 张为主图，用于转盘与弹窗封面）</label>
+        <div class="upload-row" id="uploadRow"></div>
+        <div class="hint">点击格子可上传/替换图片，点右上角 × 删除；图片自动压缩后保存在本机浏览器</div>
+      </div>
+      <div class="btnrow">
+        <button class="btn" id="savePrize" style="flex:1">保存奖品</button>
+        <button class="btn ghost" id="cancelEdit">取消</button>
+      </div>
+    </div>
+
+    <!-- 数据工具 -->
+    <div class="card">
+      <h2>数据工具</h2>
+      <div class="sub">中奖记录字段：手机号 / 姓名 / 基地 / 工号 / 奖品 / 提交时间 —— 与名单审核工具口径对齐，后续可直接导入</div>
+      <div class="btnrow" style="margin-bottom:14px">
+        <button class="btn" id="exportRec">导出中奖记录 JSON</button>
+        <button class="btn ghost" id="exportCfg">导出活动配置 JSON</button>
+        <button class="btn ghost" id="toggleRec">查看记录（<span id="recCount">0</span>）</button>
+        <button class="btn danger" id="clearRec">清空记录</button>
+      </div>
+      <div class="tablebox hidden" id="recTableBox">
+        <table id="recTable">
+          <thead><tr><th>手机号</th><th>姓名</th><th>基地</th><th>工号</th><th>奖品</th><th>提交时间</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="footerlink"><a href="index.html">← 返回活动页</a></div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  /* ---------- 存储协议（与 index.html 一致） ---------- */
+  var LS_KEY = 'lw_config', LS_REC = 'lw_records', LS_PASS = 'lw_pass';
+  var SK_PASS = 'lw_admin_ok';
+  var IDB_NAME = 'lucky_wheel', IDB_STORE = 'images';
+  var DEFAULT_PASS = 'admin888';
+
+  function defaultConfig() {
+    return {
+      period: '宠粉日第 88 期',
+      start: '', end: '',
+      maxDraws: 1,
+      needForm: true,
+      formFields: { name: true, base: true, phone: true, gonghao: true },
+      baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
+      prizes: [
+        { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
+        { id: 'p2', name: '二等奖 · 日式香薰机',   prob: 4,  stock: 3 },
+        { id: 'p3', name: '三等奖 · 保温杯',       prob: 8,  stock: 10 },
+        { id: 'p4', name: '四等奖 · 大米5kg',      prob: 12, stock: 30 },
+        { id: 'p5', name: '五等奖 · 洗衣液',       prob: 15, stock: 50 },
+        { id: 'p6', name: '六等奖 · 纸巾一提',     prob: 20, stock: 100 },
+        { id: 'p7', name: '七等奖 · 优惠券',       prob: 24, stock: 500 },
+        { id: 'p9', name: '谢谢参与',              prob: 25, stock: null }
+      ]
+    };
+  }
+  function getConfig() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) { var c = defaultConfig(); saveConfig(c); return c; }
+      return JSON.parse(raw);
+    } catch (e) { return defaultConfig(); }
+  }
+  function saveConfig(c) { localStorage.setItem(LS_KEY, JSON.stringify(c)); }
+  function getRecords() {
+    try { return JSON.parse(localStorage.getItem(LS_REC) || '[]'); } catch (e) { return []; }
+  }
+  function saveRecords(r) { localStorage.setItem(LS_REC, JSON.stringify(r)); }
+
+  var dbp = new Promise(function (resolve) {
+    var req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = function () { req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { resolve(null); };
+  });
+  function idbGet(key) {
+    return dbp.then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(null);
+        var g = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key);
+        g.onsuccess = function () { res(g.result || null); };
+        g.onerror = function () { res(null); };
+      });
+    });
+  }
+  function idbPut(key, val) {
+    return dbp.then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(false);
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).put(val, key);
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+      });
+    });
+  }
+  function idbDel(key) {
+    return dbp.then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(false);
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).delete(key);
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+      });
+    });
+  }
+  function idbClear() {
+    return dbp.then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(false);
+        var tx = db.transaction(IDB_STORE, 'readwrite');
+        tx.objectStore(IDB_STORE).clear();
+        tx.oncomplete = function () { res(true); };
+        tx.onerror = function () { res(false); };
+      });
+    });
+  }
+
+  /* ---------- 工具 ---------- */
+  function $(id) { return document.getElementById(id); }
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg; t.style.display = 'block';
+    clearTimeout(t._tm);
+    t._tm = setTimeout(function () { t.style.display = 'none'; }, 2200);
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    var t = new Date(d), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()) + ' ' + p(t.getHours()) + ':' + p(t.getMinutes());
+  }
+  function download(filename, text) {
+    var blob = new Blob([text], { type: 'application/json;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
+  }
+  function compressImage(file, cb) {
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function () {
+      URL.revokeObjectURL(url);
+      var scale = Math.min(1, 900 / Math.max(img.width, img.height));
+      var cv = document.createElement('canvas');
+      cv.width = Math.round(img.width * scale);
+      cv.height = Math.round(img.height * scale);
+      cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+      cb(cv.toDataURL('image/jpeg', 0.8));
+    };
+    img.onerror = function () { toast('图片读取失败'); };
+    img.src = url;
+  }
+  function getPass() { return localStorage.getItem(LS_PASS) || DEFAULT_PASS; }
+
+  /* ---------- 密码门 ---------- */
+  var cfg = getConfig();
+  var editing = null; // 当前编辑奖品 id
+
+  function tryEnter() {
+    if ($('gatePass').value === getPass()) {
+      sessionStorage.setItem(SK_PASS, '1');
+      showMain();
+    } else {
+      var e = $('gateErr');
+      e.textContent = '密码错误';
+      e.style.display = 'block';
+    }
+  }
+  $('gateBtn').addEventListener('click', tryEnter);
+  $('gatePass').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') tryEnter(); });
+
+  function showMain() {
+    $('gate').classList.add('hidden');
+    $('main').classList.remove('hidden');
+    loadSetting();
+    renderPrizeList();
+    refreshRecCount();
+  }
+  if (sessionStorage.getItem(SK_PASS) === '1') showMain();
+  else if (localStorage.getItem(LS_PASS)) {
+    $('gateSub').textContent = '请输入管理密码';
+  }
+
+  /* ---------- 活动设置 ---------- */
+  function loadSetting() {
+    $('setPeriod').value = cfg.period || '';
+    $('setMaxDraws').value = cfg.maxDraws || 1;
+    $('setStart').value = cfg.start || '';
+    $('setEnd').value = cfg.end || '';
+    $('setNeedForm').checked = !!cfg.needForm;
+    var ff = cfg.formFields || {};
+    ['name', 'base', 'phone', 'gonghao'].forEach(function (f) {
+      document.querySelector('#fieldsChk [data-f="' + f + '"]').checked = (ff[f] !== false);
+    });
+    $('setBases').value = (cfg.baseOptions || []).join('\n');
+    $('periodBadge').textContent = cfg.period || '未设置期数';
+  }
+  $('saveSetting').addEventListener('click', function () {
+    var ff = {};
+    document.querySelectorAll('#fieldsChk [data-f]').forEach(function (c) {
+      ff[c.getAttribute('data-f')] = c.checked;
+    });
+    cfg.period = $('setPeriod').value.trim() || '幸运大转盘';
+    cfg.maxDraws = Math.max(1, parseInt($('setMaxDraws').value, 10) || 1);
+    cfg.start = $('setStart').value;
+    cfg.end = $('setEnd').value;
+    cfg.needForm = $('setNeedForm').checked;
+    cfg.formFields = ff;
+    cfg.baseOptions = $('setBases').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean);
+    saveConfig(cfg);
+    $('periodBadge').textContent = cfg.period;
+    toast('活动设置已保存');
+  });
+  $('changePass').addEventListener('click', function () {
+    var v = $('newPass').value.trim();
+    if (!v) return toast('请输入新密码');
+    if (v.length < 4) return toast('密码至少 4 位');
+    localStorage.setItem(LS_PASS, v);
+    $('newPass').value = '';
+    toast('密码已修改：' + v);
+  });
+
+  /* ---------- 奖品列表 ---------- */
+  function renderPrizeList() {
+    var box = $('prizeList');
+    box.innerHTML = '';
+    cfg.prizes.forEach(function (p) {
+      var row = document.createElement('div');
+      row.className = 'prize-row' + (editing === p.id ? ' active' : '');
+      var stockTxt = p.stock === null || p.stock === undefined ? '不限' : String(p.stock);
+      row.innerHTML =
+        '<div class="thumb" data-thumb="' + p.id + '">…</div>' +
+        '<div class="info">' +
+          '<div class="n"></div>' +
+          '<div class="m">概率 ' + (parseFloat(p.prob) || 0) + '% · 库存 ' + stockTxt + '</div>' +
+        '</div>' +
+        '<div class="acts">' +
+          '<button class="btn small ghost" data-act="edit" data-id="' + p.id + '">编辑</button>' +
+          '<button class="btn small danger" data-act="del" data-id="' + p.id + '">删</button>' +
+        '</div>';
+      row.querySelector('.n').textContent = p.name || '(未命名)';
+      box.appendChild(row);
+      idbGet(p.id + '::0').then(function (img) {
+        var t = row.querySelector('[data-thumb]');
+        if (img) t.innerHTML = '<img alt="主图">';
+        var el = t.querySelector('img');
+        if (el) el.src = img;
+        else t.textContent = '无图';
+      });
+    });
+    // 事件委托
+    if (box._bound) return;
+    box._bound = true;
+    box.addEventListener('click', function (ev) {
+      var btn = ev.target.closest('button[data-act]');
+      if (!btn) return;
+      var id = btn.getAttribute('data-id');
+      if (btn.getAttribute('data-act') === 'edit') openEdit(id);
+      else deletePrize(id);
+    });
+  }
+  function deletePrize(id) {
+    if (!confirm('确定删除该奖品？相关图片也会删除')) return;
+    cfg.prizes = cfg.prizes.filter(function (p) { return p.id !== id; });
+    saveConfig(cfg);
+    for (var i = 0; i < 5; i++) idbDel(id + '::' + i);
+    if (editing === id) closeEdit();
+    renderPrizeList();
+    toast('奖品已删除');
+  }
+  $('addPrize').addEventListener('click', function () {
+    var p = { id: 'p' + Date.now(), name: '新奖品', prob: 0, stock: null };
+    cfg.prizes.push(p);
+    saveConfig(cfg);
+    renderPrizeList();
+    openEdit(p.id);
+  });
+
+  /* ---------- 奖品编辑 ---------- */
+  function openEdit(id) {
+    editing = id;
+    var p = cfg.prizes.filter(function (x) { return x.id === id; })[0];
+    if (!p) return;
+    $('editTitle').textContent = p.name || '编辑奖品';
+    $('editSub').textContent = '奖品 ID：' + id;
+    $('pName').value = p.name || '';
+    $('pProb').value = (p.prob !== undefined ? p.prob : 0);
+    $('pStock').value = p.stock === null || p.stock === undefined ? '' : p.stock;
+    renderUploads(id);
+    renderPrizeList();
+    $('editCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  function closeEdit() {
+    editing = null;
+    renderPrizeList();
+    $('editTitle').textContent = '编辑奖品';
+    $('editSub').textContent = '从左侧列表选择奖品进行编辑';
+  }
+  function renderUploads(id) {
+    var row = $('uploadRow');
+    row.innerHTML = '';
+    for (var i = 0; i < 5; i++) {
+      (function (slot) {
+        var key = id + '::' + slot;
+        var div = document.createElement('div');
+        div.className = 'slot';
+        div.innerHTML = (slot === 0 ? '<span class="main-tag">主图</span>' : '') + '<span>＋ 上传</span>';
+        var fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        div.appendChild(fileInput);
+        div.addEventListener('click', function () { fileInput.click(); });
+        fileInput.addEventListener('change', function () {
+          if (!fileInput.files || !fileInput.files[0]) return;
+          compressImage(fileInput.files[0], function (dataURL) {
+            idbPut(key, dataURL).then(function (ok) {
+              if (ok) { toast(slot === 0 ? '主图已保存' : '图片已保存'); renderUploads(id); }
+              else toast('保存失败：浏览器不支持本地存储');
+            });
+          });
+          fileInput.value = '';
+        });
+        var delBtn = document.createElement('button');
+        delBtn.className = 'del';
+        delBtn.textContent = '×';
+        delBtn.style.display = 'none';
+        delBtn.addEventListener('click', function (ev) {
+          ev.stopPropagation();
+          idbDel(key).then(function () { renderUploads(id); });
+        });
+        div.appendChild(delBtn);
+        row.appendChild(div);
+        idbGet(key).then(function (img) {
+          if (!img) return;
+          div.querySelector('span').style.display = 'none';
+          var im = document.createElement('img');
+          im.src = img;
+          im.alt = '奖品图' + (slot + 1);
+          div.appendChild(im);
+          delBtn.style.display = 'block';
+        });
+      })(i);
+    }
+  }
+  $('savePrize').addEventListener('click', function () {
+    if (!editing) return toast('请先在列表选择奖品');
+    var p = cfg.prizes.filter(function (x) { return x.id === editing; })[0];
+    if (!p) return;
+    var name = $('pName').value.trim();
+    if (!name) return toast('请填写奖项名称');
+    var prob = parseFloat($('pProb').value);
+    if (isNaN(prob) || prob < 0 || prob > 100) return toast('概率需在 0~100 之间');
+    var st = $('pStock').value;
+    p.name = name;
+    p.prob = prob;
+    p.stock = st === '' ? null : Math.max(0, parseInt(st, 10));
+    saveConfig(cfg);
+    renderPrizeList();
+    toast('奖品已保存');
+  });
+  $('cancelEdit').addEventListener('click', closeEdit);
+
+  /* ---------- 数据工具 ---------- */
+  function refreshRecCount() { $('recCount').textContent = getRecords().length; }
+  $('exportRec').addEventListener('click', function () {
+    var recs = getRecords();
+    if (!recs.length) return toast('暂无中奖记录');
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    var name = 'lucky-wheel-records-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.json';
+    download(name, JSON.stringify(recs, null, 2));
+    toast('记录已导出（' + recs.length + ' 条）');
+  });
+  $('exportCfg').addEventListener('click', function () {
+    var d = new Date();
+    var p = function (n) { return (n < 10 ? '0' : '') + n; };
+    download('lucky-wheel-config-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.json',
+      JSON.stringify(getConfig(), null, 2));
+    toast('配置已导出');
+  });
+  $('toggleRec').addEventListener('click', function () {
+    var box = $('recTableBox');
+    if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+    var tb = $('recTable').querySelector('tbody');
+    tb.innerHTML = '';
+    getRecords().slice().reverse().forEach(function (r) {
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td>' + (r.phone || '-') + '</td>' +
+        '<td>' + (r.name || '-') + '</td>' +
+        '<td>' + (r.base || '-') + '</td>' +
+        '<td>' + (r.gonghao || '-') + '</td>' +
+        '<td>' + (r.prize || '-') + '</td>' +
+        '<td>' + fmtDate(r.submitTime) + '</td>';
+      tb.appendChild(tr);
+    });
+    box.classList.remove('hidden');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+  $('clearRec').addEventListener('click', function () {
+    if (!confirm('确定清空全部中奖记录？此操作不可恢复')) return;
+    saveRecords([]);
+    refreshRecCount();
+    toast('记录已清空');
+  });
+})();
+</script>
+</body>
+</html>

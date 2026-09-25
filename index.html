@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>幸运大转盘 · 宠粉日</title>
+<style>
+:root {
+  --brand: #0FDC78;
+  --brand-strong: #02743B;
+  --brand-soft: #E5FFF2;
+  --brand-on: #004D26;
+  --text: #1a1a1a;
+  --text-muted: #6b6b76;
+  --border: #e3e3e8;
+  --surface: #ffffff;
+  --surface-muted: #f5f5f7;
+  --danger: #E8463A;
+  --pin: #F87454;
+  --s1: #02743B; --s2: #85FABF; --s3: #0FDC78; --s4: #80C1FF; --s5: #D3D4DA;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: linear-gradient(180deg, #0AB861 0%, #E5FFF2 420px, #f5f5f7 420px);
+  min-height: 100vh;
+  color: var(--text);
+}
+.wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 48px; }
+.banner { text-align: center; color: #fff; padding: 18px 0 26px; }
+.banner .period {
+  display: inline-block; background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255,255,255,.5);
+  border-radius: 999px; padding: 3px 14px; font-size: 12px; margin-bottom: 10px;
+}
+.banner h1 { font-size: 26px; letter-spacing: 2px; }
+.banner .dates { font-size: 13px; opacity: .85; margin-top: 6px; }
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 16px; padding: 20px; margin-bottom: 16px;
+  box-shadow: 0 6px 24px rgba(2,116,59,.08);
+}
+.card h2 { font-size: 17px; margin-bottom: 4px; }
+.card .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.field { margin-bottom: 14px; }
+.field label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
+.field label em { color: var(--danger); font-style: normal; }
+.field input, .field select {
+  width: 100%; height: 44px; padding: 0 14px; font-size: 16px;
+  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted);
+  color: var(--text); outline: none; font-family: inherit;
+}
+.field input:focus, .field select:focus { border-color: var(--brand); background: #fff; }
+.btn {
+  width: 100%; height: 48px; border: none; border-radius: 12px;
+  background: var(--brand); color: var(--brand-on);
+  font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 1px;
+}
+.btn:active { transform: scale(.98); }
+.btn:disabled { opacity: .55; cursor: not-allowed; }
+.err {
+  display: none; color: var(--danger); font-size: 13px;
+  background: #FDECEA; border: 1px solid #F6C8C4;
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+}
+.note { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 10px; }
+.ok-banner {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--brand-soft); border: 1px solid var(--brand);
+  color: var(--brand-on); border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+}
+.wheel-area { position: relative; width: 300px; height: 310px; margin: 0 auto; }
+.wheel-area svg { display: block; }
+.pin {
+  position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0; border-left: 13px solid transparent;
+  border-right: 13px solid transparent; border-top: 24px solid var(--pin);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); z-index: 2;
+}
+#spinBtn {
+  position: absolute; left: 50%; top: 150px; transform: translate(-50%,-50%);
+  width: 78px; height: 78px; border-radius: 50%;
+  border: 3px solid var(--brand); background: #fff;
+  color: var(--brand-on); font-size: 17px; font-weight: 800;
+  cursor: pointer; z-index: 3; box-shadow: 0 3px 10px rgba(2,116,59,.2);
+}
+#spinBtn:disabled { opacity: .6; cursor: not-allowed; }
+#spinBtn:hover:not(:disabled) { background: var(--brand-soft); }
+#wheelSpin { transform-origin: 150px 150px; }
+@media (prefers-reduced-motion: no-preference) {
+  #wheelSpin { transition: transform 4.2s cubic-bezier(0.16, 0.84, 0.22, 1); }
+}
+.status-row {
+  display: flex; justify-content: space-between; align-items: center;
+  background: var(--surface-muted); border-radius: 10px;
+  padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-top: 12px;
+}
+.status-row b { color: var(--brand-strong); font-size: 15px; }
+.myprize { margin-top: 14px; }
+.myprize h3 { font-size: 14px; margin-bottom: 8px; }
+.myprize .row {
+  display: flex; justify-content: space-between; gap: 10px;
+  font-size: 13px; padding: 8px 12px; border-radius: 10px;
+  background: var(--surface-muted); margin-bottom: 6px;
+}
+.myprize .row .p { color: var(--brand-strong); font-weight: 600; }
+.footer {
+  text-align: center; font-size: 12px; color: var(--text-muted);
+  margin-top: 8px; line-height: 1.9;
+}
+.footer a { color: var(--text-muted); text-decoration: none; border-bottom: 1px dashed var(--border); }
+.modal-mask {
+  position: fixed; inset: 0; background: rgba(0,0,0,.55);
+  display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px;
+}
+.modal {
+  background: #fff; border-radius: 18px; padding: 24px 20px;
+  width: 100%; max-width: 340px; text-align: center;
+  animation: pop .28s ease;
+}
+@keyframes pop { from { transform: scale(.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.modal .tag { font-size: 13px; color: var(--brand-strong); font-weight: 600; }
+.modal .pname { font-size: 21px; font-weight: 800; margin: 8px 0 14px; }
+.modal .pimg { position: relative; }
+.modal .pimg img {
+  width: 100%; height: 200px; object-fit: cover;
+  border-radius: 12px; background: var(--surface-muted);
+}
+.modal .pimg .noimg {
+  width: 100%; height: 200px; border-radius: 12px;
+  background: var(--surface-muted); display: flex; align-items: center;
+  justify-content: center; color: var(--text-muted); font-size: 13px;
+}
+.modal .nav {
+  position: absolute; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,.45); color: #fff; border: none;
+  font-size: 15px; cursor: pointer; display: none;
+}
+.modal .nav.prev { left: 8px; }
+.modal .nav.next { right: 8px; }
+.modal .dots { margin-top: 10px; display: flex; gap: 6px; justify-content: center; }
+.modal .dots i {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--border); display: inline-block;
+}
+.modal .dots i.on { background: var(--brand); }
+.modal .cnt {
+  font-size: 12px; color: var(--text-muted); margin-top: 14px;
+}
+.modal .close {
+  margin-top: 16px; width: 100%; height: 44px; border: none;
+  border-radius: 12px; background: var(--brand); color: var(--brand-on);
+  font-size: 15px; font-weight: 700; cursor: pointer;
+}
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="banner">
+    <span class="period" id="periodBadge">活动进行中</span>
+    <h1 id="periodTitle">幸运大转盘</h1>
+    <div class="dates" id="periodDates"></div>
+  </div>
+
+  <!-- 问卷卡 -->
+  <div class="card" id="formCard">
+    <h2>参与问卷</h2>
+    <div class="sub">填写后即可抽奖 · 一个手机号限 <b id="maxDrawsText">1</b> 次</div>
+    <div class="err" id="formErr"></div>
+    <div class="field" id="f_name">
+      <label>真实姓名 <em>*</em></label>
+      <input id="inpName" type="text" placeholder="请输入姓名" autocomplete="name">
+    </div>
+    <div class="field" id="f_base">
+      <label>所在基地 <em>*</em></label>
+      <select id="inpBase"></select>
+    </div>
+    <div class="field" id="f_phone">
+      <label>出单手机号 <em>*</em></label>
+      <input id="inpPhone" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric">
+    </div>
+    <div class="field" id="f_gonghao">
+      <label>工号（选填）</label>
+      <input id="inpGonghao" type="text" placeholder="如 YD33835">
+    </div>
+    <button class="btn" id="formSubmit">提交问卷 · 解锁转盘</button>
+    <div class="note">问卷信息仅用于本次抽奖核验与兑奖</div>
+  </div>
+
+  <!-- 转盘卡 -->
+  <div class="card" id="wheelCard">
+    <div class="ok-banner" id="whoBanner">✓ 已参与</div>
+    <div class="wheel-area">
+      <div class="pin"></div>
+      <svg id="wheelSvg" viewBox="0 0 300 310" width="300" height="310" role="img" aria-label="幸运大转盘">
+        <g id="wheelSpin">
+          <circle cx="150" cy="150" r="142" fill="#f0f0f3" stroke="#ddd"></circle>
+          <g id="slices"></g>
+          <circle cx="150" cy="150" r="44" fill="#fff" stroke="#0FDC78" stroke-width="3"></circle>
+        </g>
+        <circle cx="150" cy="150" r="4" fill="#0FDC78"></circle>
+      </svg>
+      <button id="spinBtn" type="button">抽奖</button>
+    </div>
+    <div class="status-row">
+      <span>剩余抽奖次数</span>
+      <span><b id="leftCnt">0</b> 次</span>
+      <span id="joinedCnt">已参与 0 人</span>
+    </div>
+    <div class="myprize" id="myPrizes"></div>
+  </div>
+
+  <div class="footer">
+    奖品以实物为准 · 中奖结果请保留截图<br>
+    <a href="admin.html">管理配置</a>
+  </div>
+</div>
+
+<!-- 结果弹窗 -->
+<div class="modal-mask" id="modalMask">
+  <div class="modal">
+    <div class="tag">恭喜中奖</div>
+    <div class="pname" id="mName"></div>
+    <div class="pimg">
+      <div class="noimg" id="mNoimg">奖品图片加载中…</div>
+      <img id="mImg" alt="奖品图" style="display:none">
+      <button class="nav prev" id="mPrev" type="button">‹</button>
+      <button class="nav next" id="mNext" type="button">›</button>
+    </div>
+    <div class="dots" id="mDots"></div>
+    <div class="cnt">中奖记录已保存，凭手机号核对兑奖</div>
+    <button class="close" id="mClose" type="button">开心收下</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  /* ---------- 存储协议（与 admin.html 一致） ---------- */
+  var LS_KEY = 'lw_config', LS_REC = 'lw_records';
+  var IDB_NAME = 'lucky_wheel', IDB_STORE = 'images';
+
+  function defaultConfig() {
+    return {
+      period: '宠粉日第 88 期',
+      start: '', end: '',                 // 'YYYY-MM-DDTHH:mm'，留空不限制
+      maxDraws: 1,
+      needForm: true,
+      formFields: { name: true, base: true, phone: true, gonghao: true },
+      baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
+      prizes: [
+        { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
+        { id: 'p2', name: '二等奖 · 日式香薰机',   prob: 4,  stock: 3 },
+        { id: 'p3', name: '三等奖 · 保温杯',       prob: 8,  stock: 10 },
+        { id: 'p4', name: '四等奖 · 大米5kg',      prob: 12, stock: 30 },
+        { id: 'p5', name: '五等奖 · 洗衣液',       prob: 15, stock: 50 },
+        { id: 'p6', name: '六等奖 · 纸巾一提',     prob: 20, stock: 100 },
+        { id: 'p7', name: '七等奖 · 优惠券',       prob: 24, stock: 500 },
+        { id: 'p9', name: '谢谢参与',              prob: 25, stock: null }
+      ]
+    };
+  }
+  function getConfig() {
+    try {
+      var raw = localStorage.getItem(LS_KEY);
+      if (!raw) { var c = defaultConfig(); saveConfig(c); return c; }
+      var c = JSON.parse(raw);
+      if (!c.prizes || !c.prizes.length) c.prizes = defaultConfig().prizes;
+      return c;
+    } catch (e) { return defaultConfig(); }
+  }
+  function saveConfig(c) { localStorage.setItem(LS_KEY, JSON.stringify(c)); }
+  function getRecords() {
+    try { return JSON.parse(localStorage.getItem(LS_REC) || '[]'); } catch (e) { return []; }
+  }
+  function saveRecords(r) { localStorage.setItem(LS_REC, JSON.stringify(r)); }
+  function addRecord(rec) { var r = getRecords(); r.push(rec); saveRecords(r); }
+
+  var dbp = new Promise(function (resolve) {
+    var req = indexedDB.open(IDB_NAME, 1);
+    req.onupgradeneeded = function () { req.result.createObjectStore(IDB_STORE); };
+    req.onsuccess = function () { resolve(req.result); };
+    req.onerror = function () { resolve(null); };
+  });
+  function idbGet(key) {
+    return dbp.then(function (db) {
+      return new Promise(function (res) {
+        if (!db) return res(null);
+        var tx = db.transaction(IDB_STORE, 'readonly');
+        var g = tx.objectStore(IDB_STORE).get(key);
+        g.onsuccess = function () { res(g.result || null); };
+        g.onerror = function () { res(null); };
+      });
+    });
+  }
+
+  /* ---------- 工具 ---------- */
+  function $(id) { return document.getElementById(id); }
+  function maskPhone(p) { return p ? p.slice(0, 3) + '****' + p.slice(7) : ''; }
+  function fmtDate(d) {
+    if (!d) return '';
+    var t = new Date(d), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()) + ' ' + p(t.getHours()) + ':' + p(t.getMinutes());
+  }
+  function shortName(name) {
+    var s = (name || '').split(/[\s·：:，,]+/)[0];
+    return s.length > 5 ? s.slice(0, 4) + '…' : s;
+  }
+
+  /* ---------- 页面状态 ---------- */
+  var cfg = getConfig();
+  var currentDeg = 0;
+  var spinning = false;
+  var who = null; // {phone,name,base,gonghao}
+
+  /* ---------- 头部与卡片 ---------- */
+  $('periodTitle').textContent = cfg.period || '幸运大转盘';
+  $('periodDates').textContent = cfg.start || cfg.end
+    ? '活动时间 ' + fmtDate(cfg.start) + ' 至 ' + fmtDate(cfg.end)
+    : '活动长期有效';
+  $('maxDrawsText').textContent = cfg.maxDraws || 1;
+  $('joinedCnt').textContent = '已参与 ' + getRecords().length + ' 人';
+
+  function buildForm() {
+    var ff = cfg.formFields || {};
+    $('f_name').classList.toggle('hidden', !ff.name);
+    $('f_base').classList.toggle('hidden', !ff.base);
+    $('f_phone').classList.toggle('hidden', !ff.phone);
+    $('f_gonghao').classList.toggle('hidden', !ff.gonghao);
+    var sel = $('inpBase');
+    sel.innerHTML = '';
+    (cfg.baseOptions && cfg.baseOptions.length ? cfg.baseOptions : ['北京']).forEach(function (b) {
+      var o = document.createElement('option');
+      o.value = b; o.textContent = b;
+      sel.appendChild(o);
+    });
+  }
+
+  function showErr(msg) { var e = $('formErr'); e.textContent = msg; e.style.display = 'block'; }
+  function hideErr() { $('formErr').style.display = 'none'; }
+
+  function inTimeWindow() {
+    var now = Date.now();
+    if (cfg.start && now < new Date(cfg.start).getTime()) return false;
+    if (cfg.end && now > new Date(cfg.end).getTime()) return false;
+    return true;
+  }
+
+  /* ---------- 提交问卷 ---------- */
+  $('formSubmit').addEventListener('click', function () {
+    hideErr();
+    var ff = cfg.formFields || {};
+    var name = $('inpName').value.trim();
+    var base = $('inpBase').value;
+    var phone = $('inpPhone').value.trim();
+    var gonghao = $('inpGonghao').value.trim();
+
+    if (!inTimeWindow()) return showErr('当前不在活动时间内，敬请关注下期活动');
+    if (ff.name && !name) return showErr('请填写真实姓名');
+    if (ff.base && !base) return showErr('请选择所在基地');
+    if (ff.phone) {
+      if (!/^1\d{10}$/.test(phone)) return showErr('手机号格式不正确，请输入 11 位手机号');
+    } else { phone = ''; }
+    if (phone) {
+      var cnt = getRecords().filter(function (r) { return r.phone === phone; }).length;
+      if (cnt >= (cfg.maxDraws || 1)) {
+        return showErr('该手机号已参与本期活动（每人限 ' + (cfg.maxDraws || 1) + ' 次），一个手机号只能参与一个奖池');
+      }
+    }
+    if (!cfg.prizes.some(function (p) { return p.stock === null || p.stock > 0; })) {
+      return showErr('本期奖品已全部抽完，感谢参与');
+    }
+
+    who = { phone: phone, name: name, base: base, gonghao: gonghao };
+    if (phone) {
+      var nFinish = getRecords().filter(function (r) { return r.phone === phone; }).length;
+      $('whoBanner').textContent = '✓ 问卷已提交 · ' + (name || '') + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '');
+      $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - nFinish);
+    } else {
+      $('whoBanner').textContent = '✓ 问卷已提交';
+    }
+    $('formCard').classList.add('hidden');
+    $('wheelCard').classList.remove('hidden');
+    refreshMyPrizes();
+  });
+
+  /* ---------- 转盘 ---------- */
+  var PALETTE = [
+    { f: '#02743B', t: '#ffffff' },
+    { f: '#85FABF', t: '#17351f' },
+    { f: '#0FDC78', t: '#004D26' },
+    { f: '#80C1FF', t: '#17351f' },
+    { f: '#E8E8EC', t: '#4a4a55' }
+  ];
+
+  function drawWheel() {
+    var prizes = cfg.prizes.slice(0, 10);
+    var n = prizes.length;
+    if (n < 2) n = 2;
+    var g = $('slices');
+    var html = '';
+    var cx = 150, cy = 150, R = 142, seg = 360 / n;
+    for (var i = 0; i < n; i++) {
+      var a0 = (-90 + i * seg) * Math.PI / 180;
+      var a1 = (-90 + (i + 1) * seg) * Math.PI / 180;
+      var x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
+      var x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
+      var mid = (-90 + i * seg + seg / 2) * Math.PI / 180;
+      var rt = n > 8 ? 92 : 98;
+      var tx = cx + rt * Math.cos(mid);
+      var ty = cy + rt * Math.sin(mid);
+      var col = PALETTE[i % PALETTE.length];
+      var label = shortName(prizes[i] ? prizes[i].name : '');
+      html += '<path d="M' + cx + ' ' + cy + ' L' + x0.toFixed(2) + ' ' + y0.toFixed(2)
+        + ' A' + R + ' ' + R + ' 0 0 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + ' Z" fill="' + col.f + '" stroke="#fff" stroke-width="2"></path>';
+      html += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1)
+        + '" text-anchor="middle" dominant-baseline="middle" font-size="' + (n > 8 ? 11 : 13)
+        + '" font-weight="700" fill="' + col.t + '">' + label + '</text>';
+    }
+    g.innerHTML = html;
+  }
+
+  function pickPrize() {
+    var avail = cfg.prizes.filter(function (p) { return p.stock === null || p.stock > 0; });
+    var total = avail.reduce(function (s, p) { return s + (parseFloat(p.prob) || 0); }, 0);
+    if (!avail.length || total <= 0) return null;
+    var r = Math.random() * total;
+    for (var i = 0; i < avail.length; i++) {
+      r -= (parseFloat(avail[i].prob) || 0);
+      if (r <= 0) return avail[i];
+    }
+    return avail[avail.length - 1];
+  }
+
+  function refreshMyPrizes() {
+    var box = $('myPrizes');
+    box.innerHTML = '';
+    if (!who || !who.phone) return;
+    var list = getRecords().filter(function (r) { return r.phone === who.phone; });
+    if (!list.length) return;
+    var h = document.createElement('h3');
+    h.textContent = '我的中奖记录';
+    box.appendChild(h);
+    list.forEach(function (r) {
+      var d = document.createElement('div');
+      d.className = 'row';
+      d.innerHTML = '<span class="p">' + r.prize + '</span><span>' + fmtDate(r.submitTime) + '</span>';
+      box.appendChild(d);
+    });
+  }
+
+  $('spinBtn').addEventListener('click', function () {
+    if (spinning) return;
+    if (!inTimeWindow()) { alert('当前不在活动时间内'); return; }
+    if (who && who.phone) {
+      var used = getRecords().filter(function (r) { return r.phone === who.phone; }).length;
+      if (used >= (cfg.maxDraws || 1)) {
+        alert('已达本期抽奖次数上限（' + (cfg.maxDraws || 1) + ' 次）');
+        return;
+      }
+    }
+    var prize = pickPrize();
+    if (!prize) { alert('本期奖品已抽完'); return; }
+
+    spinning = true;
+    $('spinBtn').disabled = true;
+    var n = Math.min(cfg.prizes.length, 10);
+    var idx = cfg.prizes.indexOf(prize);
+    var seg = 360 / n;
+    var jitter = (Math.random() - 0.5) * seg * 0.5;
+    var target = 360 - (idx * seg + seg / 2 + jitter);
+    var delta = (target - (currentDeg % 360) + 360) % 360;
+    if (delta <= 0) delta += 360;
+    currentDeg += 5 * 360 + delta;
+
+    var wheel = $('wheelSpin');
+      var from = currentDeg - (5 * 360 + delta);
+      wheel.style.transition = 'none';
+      wheel.style.transform = 'rotate(' + from + 'deg)';
+      void wheel.offsetWidth; // 强制回流，确保先回到上次停留角度
+      wheel.style.transition = '';
+      wheel.style.transform = 'rotate(' + currentDeg + 'deg)';
+
+    setTimeout(function () {
+      spinning = false;
+      if (prize.stock !== null) {
+        prize.stock -= 1;
+        saveConfig(cfg);
+      }
+      if (who) {
+        addRecord({
+          phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
+          prizeId: prize.id, prize: prize.name, submitTime: new Date().toISOString()
+        });
+      }
+      $('joinedCnt').textContent = '已参与 ' + getRecords().length + ' 人';
+      if (who && who.phone) {
+        var used = getRecords().filter(function (r) { return r.phone === who.phone; }).length;
+        $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - used);
+        if (used >= (cfg.maxDraws || 1)) { $('spinBtn').disabled = true; $('spinBtn').textContent = '已用完'; }
+      }
+      refreshMyPrizes();
+      showModal(prize);
+    }, 4350);
+  });
+
+  /* ---------- 结果弹窗（图文轮播） ---------- */
+  var modalImgs = [], modalIdx = 0;
+  function showModal(prize) {
+    $('mName').textContent = prize.name;
+    $('mImg').style.display = 'none';
+    $('mNoimg').style.display = 'flex';
+    $('mNoimg').textContent = '奖品图片加载中…';
+    modalImgs = []; modalIdx = 0;
+    $('mPrev').style.display = 'none';
+    $('mNext').style.display = 'none';
+    $('mDots').innerHTML = '';
+    $('modalMask').style.display = 'flex';
+
+    var keys = [];
+    for (var i = 0; i < 5; i++) keys.push(prize.id + '::' + i);
+    Promise.all(keys.map(idbGet)).then(function (arr) {
+      modalImgs = arr.filter(Boolean);
+      if (!modalImgs.length) { $('mNoimg').textContent = '暂无奖品图片'; return; }
+      $('mNoimg').style.display = 'none';
+      $('mImg').style.display = 'block';
+      renderModalImg();
+      if (modalImgs.length > 1) {
+        $('mPrev').style.display = 'block';
+        $('mNext').style.display = 'block';
+        var dots = '';
+        modalImgs.forEach(function (_, i) { dots += '<i class="' + (i === 0 ? 'on' : '') + '"></i>'; });
+        $('mDots').innerHTML = dots;
+      }
+    });
+  }
+  function renderModalImg() {
+    $('mImg').src = modalImgs[modalIdx];
+    Array.prototype.forEach.call($('mDots').children, function (d, i) {
+      d.className = i === modalIdx ? 'on' : '';
+    });
+  }
+  $('mPrev').addEventListener('click', function () {
+    modalIdx = (modalIdx - 1 + modalImgs.length) % modalImgs.length;
+    renderModalImg();
+  });
+  $('mNext').addEventListener('click', function () {
+    modalIdx = (modalIdx + 1) % modalImgs.length;
+    renderModalImg();
+  });
+  $('mClose').addEventListener('click', function () {
+    $('modalMask').style.display = 'none';
+  });
+
+  /* ---------- 初始化 ---------- */
+  if (cfg.needForm) {
+    $('wheelCard').classList.add('hidden');
+    buildForm();
+  } else {
+    $('formCard').classList.add('hidden');
+    $('whoBanner').textContent = '✓ 活动进行中，直接开抽';
+    $('leftCnt').textContent = cfg.maxDraws || 1;
+  }
+  drawWheel();
+})();
+</script>
+</body>
+</html>
