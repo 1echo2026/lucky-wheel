@@ -46,11 +46,7 @@ body {
   font-family: var(--font-sans);
   color: var(--ink);
   min-height: 100vh;
-  background-color: var(--red-800);
-  background-image:
-    radial-gradient(120% 55% at 50% 0%, #C8202A 0%, #96101A 40%, #5E070D 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-color: var(--paper);
 }
 /* 云纹底纹 */
 body::before {
@@ -84,10 +80,10 @@ body.has-bg .bg-layer { display: block; }
 .banner .brand {
   font-family: var(--font-serif);
   font-size: 34px; font-weight: 900; letter-spacing: 6px; line-height: 1.25;
-  background: linear-gradient(180deg, #FFF6DA 8%, #F2D288 46%, #C99A33 78%, #FFE9A8 100%);
+  background: linear-gradient(180deg, #E0523F 0%, #C8202A 42%, #8E0F18 78%, #B3121B 100%);
   -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: #F2D288;
-  filter: drop-shadow(0 2px 0 rgba(78,5,9,.55)) drop-shadow(0 8px 16px rgba(0,0,0,.35));
+  -webkit-text-fill-color: transparent; color: #C8202A;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.9)) drop-shadow(0 6px 14px rgba(78,5,9,.16));
 }
 .banner .rule {
   width: 132px; height: 10px; margin: 8px auto 0;
@@ -107,12 +103,12 @@ body.has-bg .bg-layer { display: block; }
   box-shadow: inset 0 0 0 1px rgba(255,246,218,.35), 0 3px 10px rgba(0,0,0,.3);
 }
 .banner .period-name {
-  font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--gold-200);
-  letter-spacing: 1px; text-shadow: 0 1px 6px rgba(0,0,0,.4);
+  font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--red-700);
+  letter-spacing: 1px;
 }
 .banner .dates {
   margin-top: 8px; font-size: 12px; letter-spacing: .5px;
-  color: rgba(255,246,218,.82); text-shadow: 0 1px 6px rgba(0,0,0,.45);
+  color: var(--ink-soft);
 }
 /* 灯笼 */
 .lantern { position: absolute; top: -6px; width: 46px; height: 86px; opacity: .95; }
@@ -240,11 +236,11 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 /* ---------------- 页脚 ---------------- */
 .footer {
   text-align: center; font-size: 12px; line-height: 2;
-  color: rgba(255,246,218,.68); margin-top: 8px;
+  color: var(--ink-soft); margin-top: 8px;
 }
 .footer a {
-  color: rgba(255,246,218,.86); text-decoration: none;
-  border-bottom: 1px dashed rgba(242,210,136,.5); padding-bottom: 1px;
+  color: var(--red-700); text-decoration: none;
+  border-bottom: 1px dashed var(--line-gold); padding-bottom: 1px;
 }
 
 /* ---------------- 弹窗 ---------------- */
@@ -446,6 +442,10 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       <label>工号 <em>*</em></label>
       <input id="inpGonghao" type="text" placeholder="如 YD99999">
     </div>
+    <div class="field" id="f_amount">
+      <label>本单出单金额（元） <em>*</em></label>
+      <input id="inpAmount" type="number" min="0" step="0.01" placeholder="如 12000" inputmode="decimal">
+    </div>
     <button class="btn" id="formSubmit" type="button">提交问卷 · 解锁转盘</button>
     <div class="note">问卷信息仅用于本次抽奖核验与兑奖</div>
   </section>
@@ -519,12 +519,15 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     return {
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
+      peakPoolName: '巅峰奖池',
       template: 'wheel-bing',
+      minAmount: 999,
+      peakAmount: 20000,
       start: '', end: '',
       bgUrl: '',
       maxDraws: 1,
       needForm: true,
-      formFields: { name: true, base: true, phone: true, gonghao: true },
+      formFields: { name: true, base: true, phone: true, gonghao: true, amount: true },
       baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
       prizes: [
         { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
@@ -535,6 +538,12 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
         { id: 'p6', name: '六等奖 · 纸巾一提',     prob: 20, stock: 100 },
         { id: 'p7', name: '七等奖 · 优惠券',       prob: 24, stock: 500 },
         { id: 'p9', name: '谢谢参与',              prob: 25, stock: null }
+      ],
+      peakPrizes: [
+        { id: 'd1', name: '巅峰一等奖 · 待设置', prob: 5,  stock: 1 },
+        { id: 'd2', name: '巅峰二等奖 · 待设置', prob: 15, stock: 3 },
+        { id: 'd3', name: '巅峰三等奖 · 待设置', prob: 30, stock: 10 },
+        { id: 'd4', name: '谢谢参与',            prob: 50, stock: null }
       ]
     };
   }
@@ -547,6 +556,12 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
       if (c.template === undefined) c.template = 'wheel-bing';
+      if (c.peakPoolName === undefined) c.peakPoolName = '巅峰奖池';
+      if (!c.peakPrizes || !c.peakPrizes.length) c.peakPrizes = defaultConfig().peakPrizes;
+      if (c.minAmount === undefined) c.minAmount = 999;
+      if (c.peakAmount === undefined) c.peakAmount = 20000;
+      if (!c.formFields) c.formFields = defaultConfig().formFields;
+      if (c.formFields.amount === undefined) c.formFields.amount = true;
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -597,6 +612,20 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   function usedCount(phone) {
     return periodRecords().filter(function (r) { return r.phone === phone; }).length;
   }
+  /* 同一工号在本期已累计的出单金额（本机记录口径） */
+  function gonghaoAmount(gh) {
+    if (!gh) return 0;
+    return periodRecords().reduce(function (s, r) {
+      return r.gonghao === gh ? s + (parseFloat(r.amount) || 0) : s;
+    }, 0);
+  }
+  function fmtMoney(n) {
+    var v = Number(n) || 0;
+    var s = (Math.round(v * 100) / 100).toString();
+    var parts = s.split('.');
+    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    return parts.join('.');
+  }
   function isExpired() {
     return !!(cfg.end && Date.now() > new Date(cfg.end).getTime());
   }
@@ -618,7 +647,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   $('periodDates').textContent = dateTxt.length ? dateTxt.join(' · ') : '活动长期有效';
   $('maxDrawsText').textContent = cfg.maxDraws || 1;
   $('joinedCnt').textContent = periodRecords().length + ' 人';
-  $('recSub').textContent = (cfg.poolName || '奖池') + ' · 每期抽奖记录都会保留';
+  $('recSub').textContent = (cfg.poolName || '进阶奖池') + ' / ' + (cfg.peakPoolName || '巅峰奖池') + ' · 每期抽奖记录都会保留';
 
   /* ---------- 弹窗开合 ---------- */
   function openMask(el) { el.classList.add('open'); }
@@ -665,6 +694,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     $('f_base').classList.toggle('hidden', !ff.base);
     $('f_phone').classList.toggle('hidden', !ff.phone);
     $('f_gonghao').classList.toggle('hidden', !ff.gonghao);
+    $('f_amount').classList.toggle('hidden', !ff.amount);
     var sel = $('inpBase');
     sel.innerHTML = '';
     (cfg.baseOptions && cfg.baseOptions.length ? cfg.baseOptions : ['北京']).forEach(function (b) {
@@ -683,30 +713,56 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
     var base = $('inpBase').value;
     var phone = $('inpPhone').value.trim();
     var gonghao = $('inpGonghao').value.trim();
+    var amount = parseFloat($('inpAmount').value);
+    if (isNaN(amount)) amount = 0;
 
     if (!inTimeWindow()) return showErr(isExpired() ? '本期抽奖已截止，敬请关注下期活动' : '活动尚未开始，敬请期待');
     if (ff.name && !name) return showErr('请填写真实姓名');
     if (ff.base && !base) return showErr('请选择所在基地');
     if (ff.gonghao && !gonghao) return showErr('请填写工号');
+    if (ff.amount && !(amount > 0)) return showErr('请填写本单出单金额');
     if (ff.phone) {
       if (!/^\d{11}$/.test(phone)) { showTip('请检查您输入的手机号是否有误'); return; }
     } else { phone = ''; }
+
+    /* 出单金额门槛：不足最低金额不具备抽奖资格 */
+    var minAmount = parseFloat(cfg.minAmount);
+    if (isNaN(minAmount)) minAmount = 999;
+    if (amount < minAmount) {
+      showTip('您暂时不具备抽奖资格，请老师努力出单再来抽奖💪🏻');
+      return;
+    }
     if (phone && usedCount(phone) >= (cfg.maxDraws || 1)) {
       return showErr('该出单手机号已参与本期抽奖（一个出单手机号仅可抽一次）');
     }
-    if (!cfg.prizes.some(function (p) { return p.stock === null || p.stock > 0; })) {
-      return showErr('本期奖品已全部抽完，感谢参与');
+
+    /* 同一工号累计出单金额（含本单）：达标即解锁巅峰奖池 */
+    var peakAmount = parseFloat(cfg.peakAmount);
+    if (isNaN(peakAmount)) peakAmount = 20000;
+    var cum = amount + gonghaoAmount(gonghao);
+    var pool = (gonghao && cum >= peakAmount) ? 'peak' : 'jj';
+
+    if (!poolPrizes(pool).some(function (p) { return p.stock === null || p.stock > 0; })) {
+      return showErr('该奖池奖品已全部抽完，感谢参与');
     }
 
-    who = { phone: phone, name: name, base: base, gonghao: gonghao };
+    who = { phone: phone, name: name, base: base, gonghao: gonghao, amount: amount, cum: cum, pool: pool };
+    /* 奖池变化后需要按新奖池重画转盘并重新绑定按钮 */
+    renderStage();
+    bindSpin();
+
     var left = phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(phone)) : (cfg.maxDraws || 1);
-    $('whoBanner').textContent = '问卷已提交 · ' + (name || '参与者') + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '');
+    $('whoBanner').textContent = poolLabel(pool) + ' · ' + (name || '参与者')
+      + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '')
+      + (gonghao ? ' · 累计 ' + fmtMoney(cum) + ' 元' : '');
     $('leftCnt').textContent = left;
     if (left <= 0) setSpinUsed();
     $('formCard').classList.add('hidden');
     $('wheelCard').classList.remove('hidden');
     $('wheelCard').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
     renderRecords();
+
+    if (pool === 'peak') showTip('🎊恭喜老师解锁巅峰奖池🎊');
   });
 
   /* ---------- 抽奖模板（外观由 templates.js 提供，后台可切换） ---------- */
@@ -715,8 +771,21 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
 
   function isVoid(p) { return !!p && /谢谢|未中奖|再来一次/.test(p.name || ''); }
 
+  /* 当前奖池：默认进阶，工号累计出单金额达标后为巅峰 */
+  function poolKey() { return (who && who.pool === 'peak') ? 'peak' : 'jj'; }
+  function poolLabel(key) {
+    return (key || poolKey()) === 'peak'
+      ? (cfg.peakPoolName || '巅峰奖池')
+      : (cfg.poolName || '进阶奖池');
+  }
+  function poolPrizes(key) {
+    var k = key || poolKey();
+    if (k === 'peak') return (cfg.peakPrizes && cfg.peakPrizes.length) ? cfg.peakPrizes : (cfg.prizes || []);
+    return cfg.prizes || [];
+  }
+
   /* 只把模板能展示的奖品放进奖池，保证「看得见 = 抽得到」 */
-  function activePrizes() { return cfg.prizes.slice(0, tpl.slots || 10); }
+  function activePrizes() { return poolPrizes().slice(0, tpl.slots || 10); }
 
   function renderStage() {
     tpl.render($('wheelArea'), activePrizes());
@@ -771,8 +840,9 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
         if (who) {
           addRecord({
             phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
+            amount: who.amount, cum: who.cum,
             prizeId: prize.id, prize: prize.name,
-            period: cfg.period, pool: cfg.poolName || '进阶奖池',
+            period: cfg.period, pool: poolLabel(),
             submitTime: new Date().toISOString()
           });
         }

@@ -253,15 +253,16 @@ td { word-break: break-all; }
   background: #FFFDF8; color: var(--ink); outline: none; font-family: inherit;
 }
 .inline-input:focus { border-color: var(--gold-500); background: #fff; box-shadow: 0 0 0 3px rgba(233,196,104,.26); }
+.token-ok { color: #0F7A46; font-weight: 600; }
 .qbar .inline-input { flex: 1 1 150px; min-width: 0; }
 .qbar .btn { flex: 0 0 auto; }
 .bg-preview {
   height: 116px; border-radius: 12px; border: 1px solid var(--line-gold);
-  background: radial-gradient(120% 90% at 50% 0%, #C8202A 0%, #8E0F18 45%, #520609 100%);
+  background: #FFF9F0;
   background-size: cover; background-position: center;
   box-shadow: inset 0 0 0 3px rgba(255,246,218,.14);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: var(--gold-200); letter-spacing: .5px; text-align: center; padding: 10px;
+  font-size: 12px; color: var(--ink-soft); letter-spacing: .5px; text-align: center; padding: 10px;
 }
 .hidden { display: none !important; }
 </style>
@@ -272,7 +273,7 @@ td { word-break: break-all; }
   <!-- 密码门 -->
   <div class="gate" id="gate">
     <h1>活动管理后台</h1>
-    <div class="sub" id="gateSub">请输入管理密码（默认 admin888，可登录后修改）</div>
+    <div class="sub" id="gateSub">请输入管理密码</div>
     <div class="err" id="gateErr"></div>
     <div class="field">
       <input type="password" id="gatePass" placeholder="管理密码" autocomplete="off">
@@ -304,23 +305,39 @@ td { word-break: break-all; }
           <input type="text" id="setPeriod" placeholder="如 宠粉日第 88 期">
         </div>
         <div class="field">
-          <label>奖池名称</label>
-          <input type="text" id="setPoolName" placeholder="如 进阶奖池 / 巅峰奖池">
+          <label>奖池名称（默认奖池）</label>
+          <input type="text" id="setPoolName" placeholder="如 进阶奖池">
         </div>
       </div>
       <div class="grid2">
         <div class="field">
+          <label>巅峰奖池名称</label>
+          <input type="text" id="setPeakPoolName" placeholder="如 巅峰奖池">
+        </div>
+        <div class="field">
           <label>每人抽奖次数</label>
           <input type="number" id="setMaxDraws" min="1" max="99" value="1">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>最低出单金额（低于此金额无抽奖资格）</label>
+          <input type="number" id="setMinAmount" min="0" step="1" placeholder="999">
+        </div>
+        <div class="field">
+          <label>巅峰门槛（同一工号累计出单金额达标即进巅峰奖池）</label>
+          <input type="number" id="setPeakAmount" min="0" step="1" placeholder="20000">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field">
+          <label>抽奖开始时间（留空 = 不限）</label>
+          <input type="datetime-local" id="setStart">
         </div>
         <div class="field">
           <label>抽奖截止时间（留空 = 不限，到点自动截止）</label>
           <input type="datetime-local" id="setEnd">
         </div>
-      </div>
-      <div class="field">
-        <label>抽奖开始时间（留空 = 不限）</label>
-        <input type="datetime-local" id="setStart">
       </div>
       <div class="field">
         <label class="switch"><input type="checkbox" id="setNeedForm"> 参与前需填写问卷</label>
@@ -329,8 +346,9 @@ td { word-break: break-all; }
           <label class="switch"><input type="checkbox" data-f="base"> 基地</label>
           <label class="switch"><input type="checkbox" data-f="phone"> 手机号</label>
           <label class="switch"><input type="checkbox" data-f="gonghao"> 工号</label>
+          <label class="switch"><input type="checkbox" data-f="amount"> 出单金额</label>
         </div>
-        <div class="hint">手机号用于「一个出单手机号仅可抽一次」校验；同一工号可对应多个出单手机号，工号不参与唯一性校验</div>
+        <div class="hint">手机号用于「一个出单手机号仅可抽一次」校验；工号用于「累计出单金额」判池（同一工号可对应多个出单手机号）</div>
       </div>
       <div class="field">
         <label>抽奖模板（前台外观，保存设置后生效）</label>
@@ -351,24 +369,27 @@ td { word-break: break-all; }
         </div>
         <div class="hint" style="margin-bottom:10px">
           上传后会发布到仓库 <b>assets/bg.jpg</b>，所有访客打开抽奖页都能看到；发布后约 1~10 分钟全网生效。
-          发布需要在下面填一次 GitHub 令牌（只存本机浏览器，不会上传）。
+          令牌只在本机保存，<b>填一次就够</b>，之后换图直接点上传即可。
+          当前未发布背景图时，抽奖页为暖白底。
         </div>
         <div class="grid2">
           <div class="field">
-            <label>GitHub 令牌（需对该仓库有 Contents 写入权限）</label>
+            <label>GitHub 令牌（只需填一次，之后一直记住）</label>
             <div class="btnrow">
-              <input type="password" id="ghToken" placeholder="ghp_... / github_pat_..." style="flex:1;min-width:140px">
+              <input type="password" id="ghToken" placeholder="github_pat_... / ghp_..." style="flex:1;min-width:140px">
               <button class="btn ghost" id="saveToken">保存令牌</button>
+              <button class="btn ghost" id="clearToken" style="display:none">清除令牌</button>
             </div>
+            <div class="hint" id="tokenState"></div>
           </div>
           <div class="field">
             <label>仓库（owner/repo）</label>
             <input type="text" id="setRepo" placeholder="1echo2026/lucky-wheel">
           </div>
         </div>
-        <label style="display:block;font-size:13px;color:var(--ink-soft);margin:4px 0 7px">或填写图片链接（无需令牌，同样所有人可见）</label>
+        <label style="display:block;font-size:13px;color:var(--ink-soft);margin:4px 0 7px">或填写图片链接（仅在本机预览，其他访客看不到；要让所有人看到必须用上面的「上传并发布」）</label>
         <input type="text" id="setBgUrl" placeholder="https://... （图片链接）" style="margin-bottom:10px;width:100%;min-height:42px;padding:9px 12px;font-size:14px;border:1px solid var(--line);border-radius:10px;background:#FFFDF8;outline:none;font-family:inherit">
-        <div class="bg-preview" id="bgPreview">默认红金渐变背景</div>
+        <div class="bg-preview" id="bgPreview">默认暖白底</div>
         <input type="file" id="bgFile" accept="image/*" style="display:none">
       </div>
       <div class="field">
@@ -383,6 +404,10 @@ td { word-break: break-all; }
     <!-- 奖品管理 -->
     <div class="card">
       <h2><span>奖品列表</span><button class="btn small" id="addPrize">＋ 新增奖品</button></h2>
+      <div class="qbar" style="margin-bottom:10px">
+        <select id="setPool" class="inline-input"></select>
+        <span class="hint" style="align-self:center">两个奖池各一套奖品，独立维护</span>
+      </div>
       <div class="sub">转盘格数随奖品数自动变化（建议 2~10 个，最多取前 10 个），概率之和建议等于 100</div>
       <div id="prizeList"></div>
     </div>
@@ -466,12 +491,15 @@ td { word-break: break-all; }
     return {
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
+      peakPoolName: '巅峰奖池',
       template: 'wheel-bing',
+      minAmount: 999,
+      peakAmount: 20000,
       start: '', end: '',
       bgUrl: '',
       maxDraws: 1,
       needForm: true,
-      formFields: { name: true, base: true, phone: true, gonghao: true },
+      formFields: { name: true, base: true, phone: true, gonghao: true, amount: true },
       baseOptions: ['北京', '武汉', '成都', '西安', '合肥', '新乡', '郑州'],
       prizes: [
         { id: 'p1', name: '一等奖 · 双开门冰箱', prob: 2,  stock: 1 },
@@ -482,6 +510,12 @@ td { word-break: break-all; }
         { id: 'p6', name: '六等奖 · 纸巾一提',     prob: 20, stock: 100 },
         { id: 'p7', name: '七等奖 · 优惠券',       prob: 24, stock: 500 },
         { id: 'p9', name: '谢谢参与',              prob: 25, stock: null }
+      ],
+      peakPrizes: [
+        { id: 'd1', name: '巅峰一等奖 · 待设置', prob: 5,  stock: 1 },
+        { id: 'd2', name: '巅峰二等奖 · 待设置', prob: 15, stock: 3 },
+        { id: 'd3', name: '巅峰三等奖 · 待设置', prob: 30, stock: 10 },
+        { id: 'd4', name: '谢谢参与',            prob: 50, stock: null }
       ]
     };
   }
@@ -493,6 +527,12 @@ td { word-break: break-all; }
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
       if (c.template === undefined) c.template = 'wheel-bing';
+      if (c.peakPoolName === undefined) c.peakPoolName = '巅峰奖池';
+      if (!c.peakPrizes || !c.peakPrizes.length) c.peakPrizes = defaultConfig().peakPrizes;
+      if (c.minAmount === undefined) c.minAmount = 999;
+      if (c.peakAmount === undefined) c.peakAmount = 20000;
+      if (!c.formFields) c.formFields = defaultConfig().formFields;
+      if (c.formFields.amount === undefined) c.formFields.amount = true;
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -626,7 +666,7 @@ td { word-break: break-all; }
     var root = $('tplPreview');
     if (!root) return;
     LuckyTemplates.inject();
-    LuckyTemplates.get($('setTemplate').value).render(root, cfg.prizes);
+    LuckyTemplates.get($('setTemplate').value).render(root, currentPrizeList());
   }
   $('setTemplate').addEventListener('change', renderTemplatePreview);
 
@@ -634,19 +674,24 @@ td { word-break: break-all; }
   function loadSetting() {
     $('setPeriod').value = cfg.period || '';
     $('setPoolName').value = cfg.poolName || '';
+    $('setPeakPoolName').value = cfg.peakPoolName || '';
+    $('setMinAmount').value = cfg.minAmount === undefined ? 999 : cfg.minAmount;
+    $('setPeakAmount').value = cfg.peakAmount === undefined ? 20000 : cfg.peakAmount;
     $('setMaxDraws').value = cfg.maxDraws || 1;
     $('setStart').value = cfg.start || '';
     $('setEnd').value = cfg.end || '';
     $('setBgUrl').value = cfg.bgUrl || '';
     $('setRepo').value = localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel';
-    $('ghToken').placeholder = localStorage.getItem(LS_GH_TOKEN) ? '令牌已保存（粘贴新值可覆盖）' : 'ghp_... / github_pat_...';
+    updateTokenState();
     $('setNeedForm').checked = !!cfg.needForm;
     var ff = cfg.formFields || {};
-    ['name', 'base', 'phone', 'gonghao'].forEach(function (f) {
-      document.querySelector('#fieldsChk [data-f="' + f + '"]').checked = (ff[f] !== false);
+    ['name', 'base', 'phone', 'gonghao', 'amount'].forEach(function (f) {
+      var el = document.querySelector('#fieldsChk [data-f="' + f + '"]');
+      if (el) el.checked = (ff[f] !== false);
     });
     $('setBases').value = (cfg.baseOptions || []).join('\n');
     $('periodBadge').textContent = cfg.period || '未设置期数';
+    fillPoolOptions();
     fillTemplateOptions();
     renderTemplatePreview();
     renderBgPreview();
@@ -658,6 +703,11 @@ td { word-break: break-all; }
     });
     cfg.period = $('setPeriod').value.trim() || '幸运大转盘';
     cfg.poolName = $('setPoolName').value.trim() || '进阶奖池';
+    cfg.peakPoolName = $('setPeakPoolName').value.trim() || '巅峰奖池';
+    cfg.minAmount = parseFloat($('setMinAmount').value);
+    if (isNaN(cfg.minAmount)) cfg.minAmount = 999;
+    cfg.peakAmount = parseFloat($('setPeakAmount').value);
+    if (isNaN(cfg.peakAmount)) cfg.peakAmount = 20000;
     cfg.template = $('setTemplate').value || LuckyTemplates.defaultId;
     cfg.maxDraws = Math.max(1, parseInt($('setMaxDraws').value, 10) || 1);
     cfg.start = $('setStart').value;
@@ -669,6 +719,7 @@ td { word-break: break-all; }
     saveConfig(cfg);
     localStorage.setItem(LS_GH_REPO, ghRepo());
     $('periodBadge').textContent = cfg.period;
+    fillPoolOptions();
     renderBgPreview();
     toast('活动设置已保存');
   });
@@ -690,10 +741,10 @@ td { word-break: break-all; }
         var src = img || cfg.bgUrl;
         if (!src) {
           box.style.backgroundImage = '';
-          box.textContent = '默认红金渐变背景（尚未发布背景图）';
+          box.textContent = '默认暖白底（尚未发布背景图）';
           return;
         }
-        box.textContent = img ? '旧的本机背景图（仅本机可见）' : '链接背景图（所有人可见）';
+        box.textContent = img ? '旧的本机背景图（仅本机可见）' : '链接背景图（仅本机可见）';
         box.style.backgroundImage = 'linear-gradient(rgba(78,5,9,.42),rgba(78,5,9,.42)), url("' + src + '")';
       });
     };
@@ -706,8 +757,29 @@ td { word-break: break-all; }
     localStorage.setItem(LS_GH_TOKEN, t);
     localStorage.setItem(LS_GH_REPO, ghRepo());
     $('ghToken').value = '';
-    toast('令牌已保存到本机浏览器');
+    updateTokenState();
+    toast('令牌已记住，以后换背景图无需再填');
   });
+  $('clearToken').addEventListener('click', function () {
+    if (!confirm('清除本机保存的令牌？清除后需要重新填写才能发布背景图')) return;
+    localStorage.removeItem(LS_GH_TOKEN);
+    updateTokenState();
+    toast('本机令牌已清除');
+  });
+
+  /* 令牌只需在本机填一次，之后一直复用 */
+  function updateTokenState() {
+    var has = !!localStorage.getItem(LS_GH_TOKEN);
+    var el = $('tokenState');
+    if (el) {
+      el.textContent = has ? '✓ 本机已记住令牌，换背景图无需再次填写' : '尚未填写令牌（填一次即可，之后一直记住）';
+      el.className = has ? 'hint token-ok' : 'hint';
+    }
+    var ct = $('clearToken');
+    if (ct) ct.style.display = has ? '' : 'none';
+    var inp = $('ghToken');
+    if (inp) inp.placeholder = has ? '如需更换令牌，粘贴新值再保存' : 'github_pat_... / ghp_...';
+  }
 
   function publishBg(dataURL) {
     var token = localStorage.getItem(LS_GH_TOKEN);
@@ -760,11 +832,40 @@ td { word-break: break-all; }
     toast('密码已修改：' + v);
   });
 
-  /* ---------- 奖品列表 ---------- */
+  /* ---------- 奖品列表（进阶 / 巅峰 两套） ---------- */
+  var editingPool = 'jj'; /* jj = 默认奖池, peak = 巅峰奖池 */
+  function currentPrizeList() {
+    if (editingPool === 'peak') {
+      if (!cfg.peakPrizes) cfg.peakPrizes = [];
+      return cfg.peakPrizes;
+    }
+    if (!cfg.prizes) cfg.prizes = [];
+    return cfg.prizes;
+  }
+  function fillPoolOptions() {
+    var sel = $('setPool');
+    if (!sel) return;
+    sel.innerHTML = '';
+    var a = document.createElement('option');
+    a.value = 'jj'; a.textContent = (cfg.poolName || '进阶奖池') + '（默认）';
+    var b = document.createElement('option');
+    b.value = 'peak'; b.textContent = cfg.peakPoolName || '巅峰奖池';
+    sel.appendChild(a); sel.appendChild(b);
+    sel.value = editingPool;
+  }
+  if ($('setPool')) {
+    $('setPool').addEventListener('change', function () {
+      editingPool = $('setPool').value;
+      closeEdit();
+      renderPrizeList();
+      renderTemplatePreview();
+    });
+  }
+
   function renderPrizeList() {
     var box = $('prizeList');
     box.innerHTML = '';
-    cfg.prizes.forEach(function (p) {
+    currentPrizeList().forEach(function (p) {
       var row = document.createElement('div');
       row.className = 'prize-row' + (editing === p.id ? ' active' : '');
       var stockTxt = p.stock === null || p.stock === undefined ? '不限' : String(p.stock);
@@ -801,6 +902,7 @@ td { word-break: break-all; }
   function deletePrize(id) {
     if (!confirm('确定删除该奖品？相关图片也会删除')) return;
     cfg.prizes = cfg.prizes.filter(function (p) { return p.id !== id; });
+    if (cfg.peakPrizes) cfg.peakPrizes = cfg.peakPrizes.filter(function (p) { return p.id !== id; });
     saveConfig(cfg);
     for (var i = 0; i < 5; i++) idbDel(id + '::' + i);
     if (editing === id) closeEdit();
@@ -810,7 +912,7 @@ td { word-break: break-all; }
   }
   $('addPrize').addEventListener('click', function () {
     var p = { id: 'p' + Date.now(), name: '新奖品', prob: 0, stock: null };
-    cfg.prizes.push(p);
+    currentPrizeList().push(p);
     saveConfig(cfg);
     renderPrizeList();
     renderTemplatePreview();
@@ -820,10 +922,10 @@ td { word-break: break-all; }
   /* ---------- 奖品编辑 ---------- */
   function openEdit(id) {
     editing = id;
-    var p = cfg.prizes.filter(function (x) { return x.id === id; })[0];
+    var p = currentPrizeList().filter(function (x) { return x.id === id; })[0];
     if (!p) return;
     $('editTitle').textContent = p.name || '编辑奖品';
-    $('editSub').textContent = '奖品 ID：' + id;
+    $('editSub').textContent = '所属：' + (editingPool === 'peak' ? (cfg.peakPoolName || '巅峰奖池') : (cfg.poolName || '进阶奖池')) + ' · 奖品 ID：' + id;
     $('pName').value = p.name || '';
     $('pProb').value = (p.prob !== undefined ? p.prob : 0);
     $('pStock').value = p.stock === null || p.stock === undefined ? '' : p.stock;
@@ -885,7 +987,7 @@ td { word-break: break-all; }
   }
   $('savePrize').addEventListener('click', function () {
     if (!editing) return toast('请先在列表选择奖品');
-    var p = cfg.prizes.filter(function (x) { return x.id === editing; })[0];
+    var p = currentPrizeList().filter(function (x) { return x.id === editing; })[0];
     if (!p) return;
     var name = $('pName').value.trim();
     if (!name) return toast('请填写奖项名称');

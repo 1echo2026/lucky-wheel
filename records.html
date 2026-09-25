@@ -41,10 +41,7 @@ body {
   font-family: var(--font-sans);
   color: var(--ink);
   min-height: 100vh;
-  background-color: var(--red-800);
-  background-image: radial-gradient(120% 55% at 50% 0%, #C8202A 0%, #96101A 40%, #5E070D 100%);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background-color: var(--paper);
 }
 body::before {
   content: '';
@@ -81,14 +78,14 @@ body.has-bg .bg-layer { display: block; }
 .head h1 {
   margin-top: 10px;
   font-family: var(--font-serif); font-size: 28px; font-weight: 900; letter-spacing: 4px;
-  background: linear-gradient(180deg, #FFF6DA 8%, #F2D288 46%, #C99A33 78%, #FFE9A8 100%);
+  background: linear-gradient(180deg, #E0523F 0%, #C8202A 42%, #8E0F18 78%, #B3121B 100%);
   -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: #F2D288;
-  filter: drop-shadow(0 2px 0 rgba(78,5,9,.55)) drop-shadow(0 8px 16px rgba(0,0,0,.35));
+  -webkit-text-fill-color: transparent; color: #C8202A;
+  filter: drop-shadow(0 1px 0 rgba(255,255,255,.9)) drop-shadow(0 5px 12px rgba(78,5,9,.14));
 }
 .head .meta {
   margin-top: 10px; font-size: 12px; letter-spacing: .5px;
-  color: rgba(255,246,218,.82); text-shadow: 0 1px 6px rgba(0,0,0,.45);
+  color: var(--ink-soft);
 }
 
 /* 宣纸卡片 */
@@ -164,11 +161,11 @@ body.has-bg .bg-layer { display: block; }
 
 .footer {
   text-align: center; font-size: 12px; line-height: 2;
-  color: rgba(255,246,218,.68); margin-top: 8px;
+  color: var(--ink-soft); margin-top: 8px;
 }
 .footer a {
-  color: rgba(255,246,218,.86); text-decoration: none;
-  border-bottom: 1px dashed rgba(242,210,136,.5); padding-bottom: 1px;
+  color: var(--red-700); text-decoration: none;
+  border-bottom: 1px dashed var(--line-gold); padding-bottom: 1px;
 }
 @media (max-width: 360px) {
   .head h1 { font-size: 24px; letter-spacing: 3px; }
