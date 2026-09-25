@@ -3,156 +3,265 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#7A0A12">
 <title>活动管理后台 · 幸运大转盘</title>
 <style>
+/* ============================================================
+   国潮喜庆红金 · 后台设计令牌（与 index.html 同源）
+   ============================================================ */
 :root {
-  --brand: #0FDC78;
-  --brand-strong: #02743B;
-  --brand-soft: #E5FFF2;
-  --brand-on: #004D26;
-  --text: #1a1a1a;
-  --text-muted: #6b6b76;
-  --border: #e3e3e8;
-  --surface: #ffffff;
-  --surface-muted: #f5f5f7;
-  --danger: #E8463A;
-  --danger-soft: #FDECEA;
+  --red-900: #4E0509;
+  --red-800: #6E0910;
+  --red-700: #8E0F18;
+  --red-600: #B3121B;
+  --red-500: #C8202A;
+  --gold-100: #FFF6DA;
+  --gold-200: #FFE9A8;
+  --gold-300: #F2D288;
+  --gold-400: #E9C468;
+  --gold-500: #D2A544;
+  --gold-700: #9A6E1E;
+  --gold-ink: #8A5F16;
+  --paper: #FFFBF3;
+  --paper-2: #FDF1DF;
+  --ink: #3A1A12;
+  --ink-soft: #80604F;
+  --line: #E7D6BC;
+  --line-gold: rgba(210,165,68,.5);
+  --danger: #B3121B;
+  --danger-soft: #FDECE7;
+  --font-serif: "STZhongsong", "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body {
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  background: var(--surface-muted); min-height: 100vh; color: var(--text);
+  font-family: var(--font-sans); color: var(--ink); min-height: 100vh;
+  background-color: #F4EADA;
+  background-image:
+    radial-gradient(100% 34% at 50% 0%, rgba(200,32,42,.26) 0%, rgba(244,234,218,0) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%239A6E1E' stroke-opacity='0.08' stroke-width='1' stroke-linecap='round'%3E%3Cpath d='M8 40q0-11 11-11 1-9 11-9t11 9q11 0 11 11t-11 11H19Q8 51 8 40z'/%3E%3Ccircle cx='24' cy='40' r='3.2'/%3E%3Cpath d='M58 12q0-6 6-6t6 6-6 6h-6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 100% 100%, 80px 80px;
+  background-repeat: no-repeat, repeat;
 }
-.wrap { max-width: 720px; margin: 0 auto; padding: 20px 16px 56px; }
+.wrap { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+
+/* 顶栏 */
 .topbar {
   display: flex; align-items: center; justify-content: space-between; gap: 12px;
-  margin-bottom: 16px; flex-wrap: wrap;
+  flex-wrap: wrap; margin-bottom: 18px;
+  padding: 16px 20px; border-radius: 16px;
+  background: linear-gradient(180deg, #8E0F18, #6E0910);
+  border: 1px solid var(--gold-500);
+  box-shadow: inset 0 0 0 3px rgba(255,246,218,.12), 0 10px 26px rgba(78,5,9,.28);
 }
-.topbar h1 { font-size: 20px; }
-.topbar .sub { font-size: 12px; color: var(--text-muted); }
+.topbar h1 {
+  font-family: var(--font-serif); font-size: 21px; font-weight: 900; letter-spacing: 2px;
+  background: linear-gradient(180deg, #FFF6DA, #F2D288 55%, #C99A33);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: #F2D288;
+}
+.topbar .sub { font-size: 12px; color: rgba(255,246,218,.72); margin-top: 4px; line-height: 1.6; }
 .topbar .period {
-  border: 1px solid var(--brand); color: var(--brand-strong);
-  border-radius: 999px; padding: 4px 14px; font-size: 12px; font-weight: 600;
+  padding: 5px 15px; border-radius: 999px; font-family: var(--font-serif);
+  font-size: 12px; font-weight: 700; letter-spacing: .5px;
+  color: var(--gold-100); background: rgba(255,246,218,.12);
+  border: 1px solid var(--gold-400);
+  box-shadow: inset 0 0 0 1px rgba(255,246,218,.25);
 }
+.topbar .link { color: rgba(255,246,218,.85); font-size: 12px; text-decoration: none; border-bottom: 1px dashed rgba(242,210,136,.5); }
+
+/* 卡片 */
 .card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 14px; padding: 18px; margin-bottom: 14px;
+  position: relative; background: var(--paper);
+  border: 1px solid var(--line-gold); border-radius: 16px;
+  padding: 20px; margin-bottom: 16px;
+  box-shadow: 0 8px 22px rgba(78,5,9,.10);
 }
-.card h2 { font-size: 16px; margin-bottom: 4px; display: flex; align-items: center; justify-content: space-between; }
-.card .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 14px; }
+.card::after {
+  content: ''; position: absolute; inset: 6px; border-radius: 11px;
+  border: 1px solid rgba(210,165,68,.22); pointer-events: none;
+}
+.card > * { position: relative; z-index: 1; }
+.card h2 {
+  font-family: var(--font-serif); font-size: 17px; font-weight: 800; letter-spacing: 1px;
+  color: var(--red-700); margin-bottom: 4px;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+}
+.card h2::before {
+  content: ''; width: 7px; height: 7px; flex: 0 0 auto; margin-right: -4px;
+  background: linear-gradient(135deg, var(--gold-200), var(--gold-500));
+  transform: rotate(45deg);
+}
+.card h2 > span:first-child { flex: 1 1 auto; }
+.card .sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 16px; line-height: 1.75; }
 .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 @media (max-width: 560px) { .grid2 { grid-template-columns: 1fr; } }
+
+/* 表单控件 */
 .field { margin-bottom: 12px; }
-.field label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-.field input[type=text], .field input[type=number], .field input[type=datetime-local], .field input[type=password], .field textarea, .field select {
-  width: 100%; min-height: 40px; padding: 8px 12px; font-size: 14px;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted);
-  color: var(--text); outline: none; font-family: inherit;
+.field > label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 7px; letter-spacing: .4px; }
+.field input[type=text], .field input[type=number], .field input[type=datetime-local],
+.field input[type=password], .field textarea, .field select {
+  width: 100%; min-height: 42px; padding: 9px 12px; font-size: 14px;
+  border: 1px solid var(--line); border-radius: 10px; background: #FFFDF8;
+  color: var(--ink); outline: none; font-family: inherit;
+  transition: border-color .18s, box-shadow .18s, background .18s;
 }
-.field textarea { resize: vertical; min-height: 64px; }
-.field input:focus, .field textarea:focus { border-color: var(--brand); background: #fff; }
-.hint { font-size: 12px; color: var(--text-muted); margin-top: 4px; line-height: 1.6; }
+.field textarea { resize: vertical; min-height: 68px; line-height: 1.7; }
+.field input:focus, .field textarea:focus, .field select:focus {
+  border-color: var(--gold-500); background: #fff; box-shadow: 0 0 0 3px rgba(233,196,104,.26);
+}
+.hint { font-size: 12px; color: var(--ink-soft); margin-top: 6px; line-height: 1.75; }
+.hint b { color: var(--gold-ink); }
+
+/* 按钮 */
 .btn {
-  height: 42px; padding: 0 20px; border: none; border-radius: 10px;
-  background: var(--brand); color: var(--brand-on);
-  font-size: 14px; font-weight: 700; cursor: pointer;
+  height: 44px; padding: 0 20px; border: 1px solid var(--gold-700); border-radius: 10px;
+  background: linear-gradient(180deg, #FFF6DA, #E9C468 48%, #C99A33);
+  color: #6B1409; font-family: var(--font-serif);
+  font-size: 15px; font-weight: 800; letter-spacing: 1px; cursor: pointer;
+  box-shadow: 0 2px 0 var(--gold-700), 0 8px 18px rgba(78,5,9,.16);
+  transition: transform .12s ease, box-shadow .12s ease, filter .18s;
 }
-.btn:active { transform: scale(.98); }
-.btn.ghost { background: var(--surface); border: 1px solid var(--border); color: var(--text); font-weight: 500; }
-.btn.danger { background: var(--surface); border: 1px solid var(--danger); color: var(--danger); }
-.btn.small { height: 30px; padding: 0 12px; font-size: 12px; border-radius: 8px; }
+.btn:hover:not(:disabled) { filter: brightness(1.05); }
+.btn:active:not(:disabled) { transform: translateY(2px); box-shadow: 0 0 0 var(--gold-700); }
+.btn:disabled { filter: grayscale(.5); opacity: .8; cursor: not-allowed; }
+.btn.ghost {
+  background: #FFFDF8; border-color: var(--line); color: var(--ink);
+  font-family: var(--font-sans); font-weight: 600; box-shadow: none;
+}
+.btn.ghost:hover { border-color: var(--gold-500); color: var(--gold-ink); }
+.btn.danger {
+  background: #FFFDF8; border-color: #E4A79C; color: var(--danger);
+  font-family: var(--font-sans); font-weight: 600; box-shadow: none;
+}
+.btn.danger:hover { background: var(--danger-soft); }
+.btn.small { height: 32px; padding: 0 14px; font-size: 13px; border-radius: 8px; box-shadow: none; }
 .btnrow { display: flex; gap: 10px; flex-wrap: wrap; }
+:focus-visible { outline: 2px solid var(--gold-500); outline-offset: 2px; }
+
 .switch {
   display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
-  font-size: 13px; user-select: none; color: var(--text-muted);
+  font-size: 13px; user-select: none; color: var(--ink-soft);
 }
-.switch input { width: 16px; height: 16px; accent-color: var(--brand-strong); cursor: pointer; }
+.switch input { width: 16px; height: 16px; accent-color: var(--red-600); cursor: pointer; }
 .chk-line { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+
 /* 奖品列表 */
 .prize-row {
   display: flex; align-items: center; gap: 12px;
-  border: 1px solid var(--border); border-radius: 12px;
-  padding: 10px 14px; margin-bottom: 10px; background: var(--surface);
+  border: 1px solid var(--line); border-left: 3px solid var(--gold-400);
+  border-radius: 12px; padding: 10px 14px; margin-bottom: 10px;
+  background: #FFFDF8;
 }
-.prize-row.active { border-color: var(--brand); background: var(--brand-soft); }
+.prize-row.active { border-color: var(--red-500); border-left-color: var(--red-500); background: var(--paper-2); }
 .prize-row .thumb {
-  width: 42px; height: 42px; border-radius: 8px; flex: 0 0 auto;
-  background: var(--surface-muted); border: 1px dashed var(--border);
+  width: 44px; height: 44px; border-radius: 9px; flex: 0 0 auto;
+  background: var(--paper-2); border: 1px dashed var(--line-gold);
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden; color: var(--text-muted); font-size: 11px;
+  overflow: hidden; color: var(--ink-soft); font-size: 11px;
 }
 .prize-row .thumb img { width: 100%; height: 100%; object-fit: cover; }
 .prize-row .info { flex: 1 1 auto; min-width: 0; }
 .prize-row .info .n {
-  font-size: 14px; font-weight: 600; white-space: nowrap;
-  overflow: hidden; text-overflow: ellipsis;
+  font-size: 14px; font-weight: 700; color: var(--ink);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.prize-row .info .m { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.prize-row .info .m { font-size: 12px; color: var(--gold-ink); margin-top: 3px; }
 .prize-row .acts { flex: 0 0 auto; display: flex; gap: 8px; }
-/* 上传槽 */
+
+/* 图片上传槽 */
 .upload-row { display: flex; gap: 10px; flex-wrap: wrap; }
 .slot {
   position: relative; width: 86px; height: 86px; border-radius: 12px;
-  border: 1px dashed var(--border); background: var(--surface-muted);
+  border: 1px dashed var(--line-gold); background: var(--paper-2);
   display: flex; align-items: center; justify-content: center;
-  overflow: hidden; cursor: pointer; color: var(--text-muted); font-size: 12px;
+  overflow: hidden; cursor: pointer; color: var(--ink-soft); font-size: 12px;
 }
+.slot:hover { border-color: var(--gold-500); }
 .slot img { width: 100%; height: 100%; object-fit: cover; }
 .slot .main-tag {
   position: absolute; top: 4px; left: 4px; z-index: 2;
-  background: var(--brand); color: var(--brand-on);
+  background: linear-gradient(180deg, #C8202A, #8E0F18); color: var(--gold-100);
+  border: 1px solid var(--gold-400);
   font-size: 10px; padding: 1px 6px; border-radius: 999px; font-weight: 700;
 }
 .slot .del {
   position: absolute; top: 4px; right: 4px; z-index: 2;
   width: 18px; height: 18px; border: none; border-radius: 50%;
-  background: rgba(0,0,0,.5); color: #fff; font-size: 11px;
+  background: rgba(78,5,9,.65); color: var(--gold-100); font-size: 12px;
   line-height: 18px; cursor: pointer; text-align: center; padding: 0;
 }
 .slot input[type=file] { display: none; }
+
 /* 数据表 */
+.tablebox { max-height: 280px; overflow: auto; border: 1px solid var(--line); border-radius: 10px; background: #FFFDF8; }
 table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
-th { color: var(--text-muted); font-weight: 500; }
+th, td { text-align: left; padding: 9px 8px; border-bottom: 1px solid var(--line); }
+th {
+  position: sticky; top: 0; z-index: 1;
+  background: linear-gradient(180deg, #8E0F18, #7A0A12);
+  color: var(--gold-200); font-weight: 600; letter-spacing: .5px; white-space: nowrap;
+}
+tbody tr:nth-child(even) { background: rgba(253,241,223,.55); }
+tbody tr:hover { background: rgba(233,196,104,.18); }
 td { word-break: break-all; }
-.tablebox { max-height: 260px; overflow: auto; border: 1px solid var(--border); border-radius: 10px; }
+
 /* 密码门 */
 .gate {
-  max-width: 360px; margin: 14vh auto 0; background: var(--surface);
-  border: 1px solid var(--border); border-radius: 16px; padding: 28px 24px;
-  text-align: center;
+  position: relative; max-width: 372px; margin: 12vh auto 0;
+  background: var(--paper); border: 1px solid var(--gold-500); border-radius: 20px;
+  padding: 30px 26px; text-align: center;
+  box-shadow: 0 20px 50px rgba(78,5,9,.24), inset 0 0 0 4px rgba(255,246,218,.7), inset 0 0 0 5px rgba(210,165,68,.3);
 }
-.gate h1 { font-size: 18px; margin-bottom: 4px; }
-.gate .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; }
+.gate::before {
+  content: '管'; display: grid; place-items: center;
+  width: 56px; height: 56px; margin: 0 auto 14px; border-radius: 10px;
+  font-family: var(--font-serif); font-size: 30px; font-weight: 900; color: var(--gold-100);
+  background: linear-gradient(160deg, #C8202A, #8E0F18);
+  border: 2px solid var(--gold-400); transform: rotate(-5deg);
+  box-shadow: inset 0 0 0 2px rgba(255,246,218,.5);
+}
+.gate h1 {
+  font-family: var(--font-serif); font-size: 20px; font-weight: 900; letter-spacing: 2px;
+  color: var(--red-700); margin-bottom: 6px;
+}
+.gate .sub { font-size: 12px; color: var(--ink-soft); margin-bottom: 20px; line-height: 1.7; }
 .gate .err {
-  display: none; color: var(--danger); font-size: 13px; margin-bottom: 12px;
-  background: var(--danger-soft); border: 1px solid #F6C8C4;
-  border-radius: 10px; padding: 8px 12px;
+  display: none; font-size: 13px; color: var(--red-700);
+  background: var(--danger-soft); border: 1px solid #F0BFAF; border-left: 3px solid var(--red-600);
+  border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; text-align: left;
 }
+.gate .back { display: inline-block; margin-top: 16px; font-size: 12px; color: var(--ink-soft); text-decoration: none; border-bottom: 1px dashed var(--line-gold); }
+
+/* 提示条 */
 .toast {
   position: fixed; left: 50%; bottom: 40px; transform: translateX(-50%);
-  background: rgba(0,0,0,.78); color: #fff; font-size: 13px;
-  padding: 9px 18px; border-radius: 999px; z-index: 99;
-  display: none; white-space: nowrap;
+  background: linear-gradient(180deg, #8E0F18, #6E0910);
+  border: 1px solid var(--gold-400); color: var(--gold-100);
+  font-size: 13px; letter-spacing: .5px;
+  padding: 10px 20px; border-radius: 999px; z-index: 99;
+  box-shadow: 0 12px 28px rgba(78,5,9,.4);
+  display: none; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis;
 }
-.footerlink { text-align: center; margin-top: 4px; font-size: 12px; color: var(--text-muted); }
-.footerlink a { color: var(--text-muted); }
+.footerlink { text-align: center; margin-top: 8px; font-size: 12px; color: var(--ink-soft); }
+.footerlink a { color: var(--ink-soft); }
 .qbar { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .inline-input {
-  min-height: 40px; padding: 8px 12px; font-size: 14px;
-  border: 1px solid var(--border); border-radius: 10px;
-  background: var(--surface-muted); color: var(--text);
-  outline: none; font-family: inherit; box-sizing: border-box;
+  min-height: 42px; padding: 9px 12px; font-size: 14px;
+  border: 1px solid var(--line); border-radius: 10px;
+  background: #FFFDF8; color: var(--ink); outline: none; font-family: inherit;
 }
-.inline-input:focus { border-color: var(--brand); background: #fff; }
+.inline-input:focus { border-color: var(--gold-500); background: #fff; box-shadow: 0 0 0 3px rgba(233,196,104,.26); }
 .qbar .inline-input { flex: 1 1 150px; min-width: 0; }
 .qbar .btn { flex: 0 0 auto; }
 .bg-preview {
-  height: 110px; border-radius: 10px; border: 1px solid var(--border);
-  background: linear-gradient(180deg, #0AB861 0%, #E5FFF2 60%, #f5f5f7 100%);
+  height: 116px; border-radius: 12px; border: 1px solid var(--line-gold);
+  background: radial-gradient(120% 90% at 50% 0%, #C8202A 0%, #8E0F18 45%, #520609 100%);
   background-size: cover; background-position: center;
+  box-shadow: inset 0 0 0 3px rgba(255,246,218,.14);
   display: flex; align-items: center; justify-content: center;
-  font-size: 12px; color: var(--text-muted);
+  font-size: 12px; color: var(--gold-200); letter-spacing: .5px; text-align: center; padding: 10px;
 }
 .hidden { display: none !important; }
 </style>
@@ -169,7 +278,7 @@ td { word-break: break-all; }
       <input type="password" id="gatePass" placeholder="管理密码" autocomplete="off">
     </div>
     <button class="btn" id="gateBtn" style="width:100%">进入后台</button>
-    <div class="hint" style="margin-top:12px"><a href="index.html" style="color:var(--text-muted)">← 返回活动页</a></div>
+    <a class="back" href="index.html">← 返回活动页</a>
   </div>
 
   <!-- 主界面 -->
@@ -177,14 +286,17 @@ td { word-break: break-all; }
     <div class="topbar">
       <div>
         <h1>活动管理后台</h1>
-        <div class="sub">配置与记录保存在本机浏览器 · 换设备需重新配置或移配置</div>
+        <div class="sub">配置与记录保存在本机浏览器 · 换设备需重新配置或迁移配置</div>
       </div>
-      <span class="period" id="periodBadge">未设置期数</span>
+      <div style="text-align:right">
+        <span class="period" id="periodBadge">未设置期数</span>
+        <div style="margin-top:8px"><a class="link" href="index.html">查看活动页 ↗</a></div>
+      </div>
     </div>
 
     <!-- 活动设置 -->
     <div class="card">
-      <h2>活动设置 <button class="btn small" id="saveSetting">保存设置</button></h2>
+      <h2><span>活动设置</span><button class="btn small" id="saveSetting">保存设置</button></h2>
       <div class="sub">期数名称、奖池名称会同步显示在活动页；只有在本页才能设置截止时间</div>
       <div class="grid2">
         <div class="field">
@@ -221,6 +333,13 @@ td { word-break: break-all; }
         <div class="hint">手机号用于「一个出单手机号仅可抽一次」校验；同一工号可对应多个出单手机号，工号不参与唯一性校验</div>
       </div>
       <div class="field">
+        <label>抽奖模板（前台外观，保存设置后生效）</label>
+        <select id="setTemplate"></select>
+        <div class="lw-preview" id="tplPreview"
+             style="max-width:260px;margin:12px auto 0"></div>
+        <div class="hint">上面是按当前奖品实时渲染的预览；切换选项即可对比不同模板</div>
+      </div>
+      <div class="field">
         <label>基地选项（每行一个）</label>
         <textarea id="setBases" placeholder="北京&#10;武汉&#10;成都"></textarea>
       </div>
@@ -247,9 +366,9 @@ td { word-break: break-all; }
             <input type="text" id="setRepo" placeholder="1echo2026/lucky-wheel">
           </div>
         </div>
-        <label style="margin-top:4px">或填写图片链接（无需令牌，同样所有人可见）</label>
-        <input type="text" id="setBgUrl" placeholder="https://... （图片链接）" style="margin-bottom:10px">
-        <div class="bg-preview" id="bgPreview">默认渐变背景</div>
+        <label style="display:block;font-size:13px;color:var(--ink-soft);margin:4px 0 7px">或填写图片链接（无需令牌，同样所有人可见）</label>
+        <input type="text" id="setBgUrl" placeholder="https://... （图片链接）" style="margin-bottom:10px;width:100%;min-height:42px;padding:9px 12px;font-size:14px;border:1px solid var(--line);border-radius:10px;background:#FFFDF8;outline:none;font-family:inherit">
+        <div class="bg-preview" id="bgPreview">默认红金渐变背景</div>
         <input type="file" id="bgFile" accept="image/*" style="display:none">
       </div>
       <div class="field">
@@ -263,13 +382,13 @@ td { word-break: break-all; }
 
     <!-- 奖品管理 -->
     <div class="card">
-      <h2>奖品列表 <button class="btn small" id="addPrize">＋ 新增奖品</button></h2>
+      <h2><span>奖品列表</span><button class="btn small" id="addPrize">＋ 新增奖品</button></h2>
       <div class="sub">转盘格数随奖品数自动变化（建议 2~10 个，最多取前 10 个），概率之和建议等于 100</div>
       <div id="prizeList"></div>
     </div>
 
     <div class="card" id="editCard">
-      <h2 id="editTitle">编辑奖品</h2>
+      <h2><span id="editTitle">编辑奖品</span></h2>
       <div class="sub" id="editSub"></div>
       <div class="grid2">
         <div class="field">
@@ -298,7 +417,7 @@ td { word-break: break-all; }
 
     <!-- 抽奖记录查询 -->
     <div class="card">
-      <h2>抽奖记录查询</h2>
+      <h2><span>抽奖记录查询</span></h2>
       <div class="sub">按出单手机号或工号查询（支持模糊匹配），可按期数筛选；两项都留空则显示全部记录</div>
       <div class="qbar">
         <input type="text" id="qKeyword" class="inline-input" placeholder="出单手机号 / 工号">
@@ -317,7 +436,7 @@ td { word-break: break-all; }
 
     <!-- 数据工具 -->
     <div class="card">
-      <h2>数据工具</h2>
+      <h2><span>数据工具</span></h2>
       <div class="sub">当前共 <b id="recCount">0</b> 条抽奖记录 · 字段：期数 / 奖池 / 手机号 / 姓名 / 基地 / 工号 / 奖品 / 抽奖时间（与名单审核工具口径对齐，后续可直接导入）</div>
       <div class="btnrow">
         <button class="btn" id="exportRec">导出中奖记录 JSON</button>
@@ -332,6 +451,7 @@ td { word-break: break-all; }
   <div class="toast" id="toast"></div>
 </div>
 
+<script src="templates.js"></script>
 <script>
 (function () {
   'use strict';
@@ -346,6 +466,7 @@ td { word-break: break-all; }
     return {
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
+      template: 'wheel-bing',
       start: '', end: '',
       bgUrl: '',
       maxDraws: 1,
@@ -371,6 +492,7 @@ td { word-break: break-all; }
       var c = JSON.parse(raw);
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
+      if (c.template === undefined) c.template = 'wheel-bing';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -413,17 +535,6 @@ td { word-break: break-all; }
         if (!db) return res(false);
         var tx = db.transaction(IDB_STORE, 'readwrite');
         tx.objectStore(IDB_STORE)['delete'](key);
-        tx.oncomplete = function () { res(true); };
-        tx.onerror = function () { res(false); };
-      });
-    });
-  }
-  function idbClear() {
-    return dbp.then(function (db) {
-      return new Promise(function (res) {
-        if (!db) return res(false);
-        var tx = db.transaction(IDB_STORE, 'readwrite');
-        tx.objectStore(IDB_STORE).clear();
         tx.oncomplete = function () { res(true); };
         tx.onerror = function () { res(false); };
       });
@@ -499,6 +610,26 @@ td { word-break: break-all; }
     $('gateSub').textContent = '请输入管理密码';
   }
 
+  /* ---------- 抽奖模板 ---------- */
+  function fillTemplateOptions() {
+    var sel = $('setTemplate');
+    sel.innerHTML = '';
+    LuckyTemplates.list.forEach(function (t) {
+      var o = document.createElement('option');
+      o.value = t.id;
+      o.textContent = t.name;
+      sel.appendChild(o);
+    });
+    sel.value = cfg.template || LuckyTemplates.defaultId;
+  }
+  function renderTemplatePreview() {
+    var root = $('tplPreview');
+    if (!root) return;
+    LuckyTemplates.inject();
+    LuckyTemplates.get($('setTemplate').value).render(root, cfg.prizes);
+  }
+  $('setTemplate').addEventListener('change', renderTemplatePreview);
+
   /* ---------- 活动设置 ---------- */
   function loadSetting() {
     $('setPeriod').value = cfg.period || '';
@@ -516,6 +647,8 @@ td { word-break: break-all; }
     });
     $('setBases').value = (cfg.baseOptions || []).join('\n');
     $('periodBadge').textContent = cfg.period || '未设置期数';
+    fillTemplateOptions();
+    renderTemplatePreview();
     renderBgPreview();
   }
   $('saveSetting').addEventListener('click', function () {
@@ -525,6 +658,7 @@ td { word-break: break-all; }
     });
     cfg.period = $('setPeriod').value.trim() || '幸运大转盘';
     cfg.poolName = $('setPoolName').value.trim() || '进阶奖池';
+    cfg.template = $('setTemplate').value || LuckyTemplates.defaultId;
     cfg.maxDraws = Math.max(1, parseInt($('setMaxDraws').value, 10) || 1);
     cfg.start = $('setStart').value;
     cfg.end = $('setEnd').value;
@@ -548,7 +682,7 @@ td { word-break: break-all; }
   function renderBgPreview() {
     var box = $('bgPreview');
     box.textContent = '加载中…';
-    box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + BG_PATH + '?v=' + Date.now() + '")';
+    box.style.backgroundImage = 'linear-gradient(rgba(78,5,9,.42),rgba(78,5,9,.42)), url("' + BG_PATH + '?v=' + Date.now() + '")';
     var probe = new Image();
     probe.onload = function () { box.textContent = '已发布到线上的背景图（所有人可见）'; };
     probe.onerror = function () {
@@ -556,11 +690,11 @@ td { word-break: break-all; }
         var src = img || cfg.bgUrl;
         if (!src) {
           box.style.backgroundImage = '';
-          box.textContent = '默认渐变背景（尚未发布背景图）';
+          box.textContent = '默认红金渐变背景（尚未发布背景图）';
           return;
         }
         box.textContent = img ? '旧的本机背景图（仅本机可见）' : '链接背景图（所有人可见）';
-        box.style.backgroundImage = 'linear-gradient(rgba(0,0,0,.35),rgba(0,0,0,.35)), url("' + src + '")';
+        box.style.backgroundImage = 'linear-gradient(rgba(78,5,9,.42),rgba(78,5,9,.42)), url("' + src + '")';
       });
     };
     probe.src = BG_PATH + '?v=' + Date.now();
@@ -654,7 +788,6 @@ td { word-break: break-all; }
         else t.textContent = '无图';
       });
     });
-    // 事件委托
     if (box._bound) return;
     box._bound = true;
     box.addEventListener('click', function (ev) {
@@ -672,6 +805,7 @@ td { word-break: break-all; }
     for (var i = 0; i < 5; i++) idbDel(id + '::' + i);
     if (editing === id) closeEdit();
     renderPrizeList();
+    renderTemplatePreview();
     toast('奖品已删除');
   }
   $('addPrize').addEventListener('click', function () {
@@ -679,6 +813,7 @@ td { word-break: break-all; }
     cfg.prizes.push(p);
     saveConfig(cfg);
     renderPrizeList();
+    renderTemplatePreview();
     openEdit(p.id);
   });
 
@@ -700,7 +835,7 @@ td { word-break: break-all; }
     editing = null;
     renderPrizeList();
     $('editTitle').textContent = '编辑奖品';
-    $('editSub').textContent = '从左侧列表选择奖品进行编辑';
+    $('editSub').textContent = '从上方列表选择奖品进行编辑';
   }
   function renderUploads(id) {
     var row = $('uploadRow');
@@ -710,7 +845,7 @@ td { word-break: break-all; }
         var key = id + '::' + slot;
         var div = document.createElement('div');
         div.className = 'slot';
-        div.innerHTML = (slot === 0 ? '<span class="main-tag">主图</span>' : '') + '<span>＋ 上传</span>';
+        div.innerHTML = (slot === 0 ? '<span class="main-tag">主图</span>' : '') + '<span class="ph">＋ 上传</span>';
         var fileInput = document.createElement('input');
         fileInput.type = 'file';
         fileInput.accept = 'image/*';
@@ -738,7 +873,7 @@ td { word-break: break-all; }
         row.appendChild(div);
         idbGet(key).then(function (img) {
           if (!img) return;
-          div.querySelector('span').style.display = 'none';
+          div.querySelector('.ph').style.display = 'none';
           var im = document.createElement('img');
           im.src = img;
           im.alt = '奖品图' + (slot + 1);
@@ -762,6 +897,7 @@ td { word-break: break-all; }
     p.stock = st === '' ? null : Math.max(0, parseInt(st, 10));
     saveConfig(cfg);
     renderPrizeList();
+    renderTemplatePreview();
     toast('奖品已保存');
   });
   $('cancelEdit').addEventListener('click', closeEdit);

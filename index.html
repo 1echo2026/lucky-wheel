@@ -2,200 +2,440 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#7A0A12">
 <title>幸运大转盘 · 宠粉日</title>
 <style>
+/* ============================================================
+   国潮喜庆红金 · 设计令牌
+   朱红为底、赤金为饰、宣纸为卡；标题用宋，正文用黑体
+   ============================================================ */
 :root {
-  --brand: #E23B32;
-  --brand-strong: #B3160C;
-  --brand-soft: #FFF0EE;
-  --brand-on: #FFFFFF;
-  --text: #1a1a1a;
-  --text-muted: #6b6b76;
-  --border: #e3e3e8;
-  --surface: #ffffff;
-  --surface-muted: #f7f5f5;
-  --danger: #B3160C;
-  --pin: #FFC53D;
-  --s1: #C1121F; --s2: #FFD9D3; --s3: #E63946; --s4: #FFB3A7; --s5: #EFEFF2;
+  /* 朱红 */
+  --red-900: #4E0509;
+  --red-800: #6E0910;
+  --red-700: #8E0F18;
+  --red-600: #B3121B;
+  --red-500: #C8202A;
+  /* 赤金 */
+  --gold-100: #FFF6DA;
+  --gold-200: #FFE9A8;
+  --gold-300: #F2D288;
+  --gold-400: #E9C468;
+  --gold-500: #D2A544;
+  --gold-700: #9A6E1E;
+  --gold-ink: #8A5F16;          /* 宣纸上的金色文字（保证对比度） */
+  /* 宣纸 */
+  --paper: #FFF9F0;
+  --paper-2: #FDF1DF;
+  --ink: #3A1A12;
+  --ink-soft: #80604F;
+  --line: #EADAC0;
+  --line-gold: rgba(210,165,68,.55);
+
+  --font-serif: "STZhongsong", "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius: 18px;
+  --shadow-card: 0 12px 32px rgba(78,5,9,.22);
+  --shadow-gold: 0 0 0 1px rgba(242,210,136,.35), 0 10px 30px rgba(0,0,0,.35);
 }
 * { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
 body {
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
-  background: linear-gradient(180deg, #D62828 0%, #FFF0EE 420px, #f7f5f5 420px);
+  font-family: var(--font-sans);
+  color: var(--ink);
   min-height: 100vh;
-  color: var(--text);
+  background-color: var(--red-800);
+  background-image:
+    radial-gradient(120% 55% at 50% 0%, #C8202A 0%, #96101A 40%, #5E070D 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
-.wrap { max-width: 480px; margin: 0 auto; padding: 20px 16px 48px; }
-.banner { text-align: center; color: #fff; padding: 18px 0 26px; }
-.banner .period {
-  display: inline-block; background: rgba(255,255,255,.18);
-  border: 1px solid rgba(255,255,255,.5);
-  border-radius: 999px; padding: 3px 14px; font-size: 12px; margin-bottom: 10px;
+/* 云纹底纹 */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23F2D288' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M8 40q0-11 11-11 1-9 11-9t11 9q11 0 11 11t-11 11H19Q8 51 8 40z'/%3E%3Ccircle cx='24' cy='40' r='3.2'/%3E%3Cpath d='M58 12q0-6 6-6t6 6-6 6h-6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 72px 72px;
+  opacity: .07;
 }
-.banner h1 { font-size: 26px; letter-spacing: 2px; }
-.banner .dates { font-size: 13px; opacity: .85; margin-top: 6px; }
+/* 背景图图层（后台发布的图） */
+.bg-layer {
+  position: fixed; inset: 0; z-index: -1; display: none;
+  background-size: cover; background-position: center top; background-repeat: no-repeat;
+}
+.bg-layer::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(78,5,9,.62) 0%, rgba(78,5,9,.30) 38%, rgba(78,5,9,.72) 100%);
+}
+body.has-bg .bg-layer { display: block; }
+
+.svg-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
+
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 480px; margin: 0 auto;
+  padding: 18px 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+/* ---------------- 顶部题头 ---------------- */
+.banner { position: relative; text-align: center; padding: 10px 0 22px; }
+.banner .brand {
+  font-family: var(--font-serif);
+  font-size: 34px; font-weight: 900; letter-spacing: 6px; line-height: 1.25;
+  background: linear-gradient(180deg, #FFF6DA 8%, #F2D288 46%, #C99A33 78%, #FFE9A8 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: #F2D288;
+  filter: drop-shadow(0 2px 0 rgba(78,5,9,.55)) drop-shadow(0 8px 16px rgba(0,0,0,.35));
+}
+.banner .rule {
+  width: 132px; height: 10px; margin: 8px auto 0;
+  background:
+    radial-gradient(circle at 50% 50%, var(--gold-200) 0 2.6px, transparent 3px) center/100% 100% no-repeat,
+    linear-gradient(90deg, transparent, var(--gold-500) 18%, var(--gold-200) 50%, var(--gold-500) 82%, transparent) center/100% 1px no-repeat;
+}
+.banner .meta {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  flex-wrap: wrap; margin-top: 10px;
+}
+.banner .seal {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  font-family: var(--font-serif); font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  color: var(--gold-100); background: linear-gradient(180deg, #C8202A, #8E0F18);
+  border: 1px solid var(--gold-400);
+  box-shadow: inset 0 0 0 1px rgba(255,246,218,.35), 0 3px 10px rgba(0,0,0,.3);
+}
+.banner .period-name {
+  font-family: var(--font-serif); font-size: 16px; font-weight: 700; color: var(--gold-200);
+  letter-spacing: 1px; text-shadow: 0 1px 6px rgba(0,0,0,.4);
+}
+.banner .dates {
+  margin-top: 8px; font-size: 12px; letter-spacing: .5px;
+  color: rgba(255,246,218,.82); text-shadow: 0 1px 6px rgba(0,0,0,.45);
+}
+/* 灯笼 */
+.lantern { position: absolute; top: -6px; width: 46px; height: 86px; opacity: .95; }
+.lantern.l { left: -4px; transform-origin: 50% 0; animation: swing 4.6s ease-in-out infinite; }
+.lantern.r { right: -4px; transform-origin: 50% 0; animation: swing 4.6s ease-in-out infinite reverse; animation-delay: -1.4s; }
+@keyframes swing { 0%,100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+
+/* ---------------- 宣纸卡片 ---------------- */
 .card {
-  background: var(--surface); border: 1px solid var(--border);
-  border-radius: 16px; padding: 20px; margin-bottom: 16px;
-  box-shadow: 0 6px 24px rgba(214,40,40,.10);
+  position: relative; background: var(--paper);
+  border: 1px solid var(--line-gold); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-card);
 }
-.card h2 { font-size: 17px; margin-bottom: 4px; }
-.card .sub { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+.card::after {
+  content: ''; position: absolute; inset: 6px; border-radius: 12px;
+  border: 1px solid rgba(210,165,68,.26); pointer-events: none;
+}
+.card > * { position: relative; z-index: 1; }
+.card h2 {
+  font-family: var(--font-serif); font-size: 18px; font-weight: 800; letter-spacing: 1px;
+  color: var(--red-700); display: flex; align-items: center; gap: 8px;
+}
+.card h2::before {
+  content: ''; width: 8px; height: 8px; flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--gold-200), var(--gold-500));
+  transform: rotate(45deg); border-radius: 1px;
+}
+.card .sub { font-size: 12px; color: var(--ink-soft); margin: 8px 0 16px; line-height: 1.7; }
+.card .sub b { color: var(--gold-ink); }
+
+/* ---------------- 表单 ---------------- */
 .field { margin-bottom: 14px; }
-.field label { display: block; font-size: 13px; color: var(--text-muted); margin-bottom: 6px; }
-.field label em { color: var(--danger); font-style: normal; }
+.field label { display: block; font-size: 13px; color: var(--ink-soft); margin-bottom: 7px; letter-spacing: .5px; }
+.field label em { color: var(--red-600); font-style: normal; }
 .field input, .field select {
-  width: 100%; height: 44px; padding: 0 14px; font-size: 16px;
-  border: 1px solid var(--border); border-radius: 10px; background: var(--surface-muted);
-  color: var(--text); outline: none; font-family: inherit;
+  width: 100%; height: 46px; padding: 0 14px; font-size: 16px;
+  border: 1px solid var(--line); border-radius: 12px;
+  background: #FFFDF8; color: var(--ink); outline: none; font-family: inherit;
+  transition: border-color .18s, box-shadow .18s, background .18s;
 }
-.field input:focus, .field select:focus { border-color: var(--brand); background: #fff; }
+.field input::placeholder { color: #B8A491; }
+.field input:focus, .field select:focus {
+  border-color: var(--gold-500); background: #fff;
+  box-shadow: 0 0 0 3px rgba(233,196,104,.28);
+}
+select { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--gold-ink) 50%), linear-gradient(135deg, var(--gold-ink) 50%, transparent 50%); background-position: calc(100% - 18px) 21px, calc(100% - 13px) 21px; background-size: 5px 5px; background-repeat: no-repeat; }
+
+/* ---------------- 按钮 ---------------- */
 .btn {
-  width: 100%; height: 48px; border: none; border-radius: 12px;
-  background: var(--brand); color: var(--brand-on);
-  font-size: 16px; font-weight: 700; cursor: pointer; letter-spacing: 1px;
+  width: 100%; height: 50px; border: 1px solid var(--gold-700); border-radius: 12px;
+  background: linear-gradient(180deg, #FFF6DA 0%, #E9C468 46%, #C99A33 100%);
+  color: #6B1409; font-family: var(--font-serif);
+  font-size: 17px; font-weight: 800; letter-spacing: 2px; cursor: pointer;
+  box-shadow: 0 3px 0 var(--gold-700), 0 10px 22px rgba(78,5,9,.28);
+  transition: transform .12s ease, box-shadow .12s ease, filter .18s;
 }
-.btn:active { transform: scale(.98); }
-.btn:disabled { opacity: .55; cursor: not-allowed; }
+.btn:hover:not(:disabled) { filter: brightness(1.05); }
+.btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 0 0 var(--gold-700), 0 4px 10px rgba(78,5,9,.3); }
+.btn:disabled { filter: grayscale(.5) brightness(.94); opacity: .8; cursor: not-allowed; box-shadow: 0 2px 0 var(--gold-700); }
+:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+
 .err {
-  display: none; color: var(--danger); font-size: 13px;
-  background: #FDECEA; border: 1px solid #F6C8C4;
-  border-radius: 10px; padding: 10px 14px; margin-bottom: 14px;
+  display: none; font-size: 13px; line-height: 1.6;
+  color: var(--red-700); background: #FDECE7; border: 1px solid #F0BFAF;
+  border-left: 3px solid var(--red-600); border-radius: 10px;
+  padding: 10px 14px; margin-bottom: 14px;
 }
-.note { text-align: center; font-size: 12px; color: var(--text-muted); margin-top: 10px; }
-.ok-banner {
-  display: flex; align-items: center; gap: 8px;
-  background: var(--brand-soft); border: 1px solid var(--brand);
-  color: var(--brand-on); border-radius: 10px;
-  padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+.note { text-align: center; font-size: 12px; color: var(--ink-soft); margin-top: 12px; letter-spacing: .4px; }
+
+/* ---------------- 转盘（红底金环 · 主视觉） ---------------- */
+.hero {
+  background:
+    radial-gradient(120% 80% at 50% -10%, #A8121C 0%, #7A0A12 52%, #520609 100%);
+  border-color: rgba(242,210,136,.5);
+  box-shadow: var(--shadow-gold);
+  padding: 18px 16px 16px;
+  overflow: hidden;
 }
-.wheel-area { position: relative; width: 300px; height: 310px; margin: 0 auto; }
-.wheel-area svg { display: block; }
-.pin {
-  position: absolute; top: -4px; left: 50%; transform: translateX(-50%);
-  width: 0; height: 0; border-left: 13px solid transparent;
-  border-right: 13px solid transparent; border-top: 24px solid var(--pin);
-  filter: drop-shadow(0 2px 3px rgba(0,0,0,.25)); z-index: 2;
+.hero::after { border-color: rgba(242,210,136,.2); }
+.who {
+  display: flex; align-items: center; gap: 8px; justify-content: center;
+  font-size: 13px; color: var(--gold-100); letter-spacing: .4px;
+  background: rgba(255,246,218,.1); border: 1px solid rgba(242,210,136,.42);
+  border-radius: 999px; padding: 8px 16px; margin-bottom: 16px;
+  text-align: center; line-height: 1.5;
 }
-#spinBtn {
-  position: absolute; left: 50%; top: 150px; transform: translate(-50%,-50%);
-  width: 78px; height: 78px; border-radius: 50%;
-  border: 3px solid var(--brand); background: #fff;
-  color: var(--brand-on); font-size: 17px; font-weight: 800;
-  cursor: pointer; z-index: 3; box-shadow: 0 3px 10px rgba(214,40,40,.22);
-}
-#spinBtn:disabled { opacity: .6; cursor: not-allowed; }
-#spinBtn:hover:not(:disabled) { background: var(--brand-soft); }
-#wheelSpin { transform-origin: 150px 150px; }
-@media (prefers-reduced-motion: no-preference) {
-  #wheelSpin { transition: transform 4.2s cubic-bezier(0.16, 0.84, 0.22, 1); }
-}
+.who::before { content: '✦'; color: var(--gold-300); flex: 0 0 auto; }
+
+.wheel-area { position: relative; width: min(330px, 86vw); margin: 16px auto 0; }
+/* 转盘内部的扇区/灯珠/指针/中心按钮样式已移入 templates.js（模板自带样式，
+   以便后台预览也能正确显示）。这里只保留转盘容器尺寸。 */
+
 .status-row {
-  display: flex; justify-content: space-between; align-items: center;
-  background: var(--surface-muted); border-radius: 10px;
-  padding: 10px 14px; font-size: 13px; color: var(--text-muted); margin-top: 12px;
+  display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 8px;
+  margin-top: 18px; padding: 12px 14px; border-radius: 12px;
+  background: rgba(255,246,218,.08); border: 1px solid rgba(242,210,136,.28);
+  font-size: 12px; color: rgba(255,246,218,.78); letter-spacing: .4px;
 }
-.status-row b { color: var(--brand-strong); font-size: 15px; }
-body.has-bg {
-  background-size: cover; background-position: center top;
-  background-repeat: no-repeat; background-attachment: fixed;
-  background-color: #f5f5f7;
+.status-row .left, .status-row .right { line-height: 1.65; }
+.status-row .left b { font-family: var(--font-serif); font-size: 15px; color: var(--gold-200); }
+.status-row .mid { text-align: center; padding: 0 10px; border-left: 1px solid rgba(242,210,136,.25); border-right: 1px solid rgba(242,210,136,.25); }
+.status-row .mid b {
+  display: block; font-family: var(--font-serif); font-size: 24px; line-height: 1.25;
+  color: var(--gold-200); text-shadow: 0 1px 8px rgba(233,196,104,.45);
 }
-body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba(0,0,0,.5); }
-.rec-group { margin-bottom: 14px; }
+.status-row .right { text-align: right; }
+
+/* ---------------- 抽奖记录 ---------------- */
+.rec-group { margin-bottom: 16px; }
 .rec-group:last-child { margin-bottom: 0; }
 .rec-head {
-  font-size: 13px; font-weight: 700; color: var(--brand-strong);
-  padding: 6px 0 8px; border-bottom: 1px dashed var(--border); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-serif); font-size: 14px; font-weight: 700;
+  color: var(--red-700); padding-bottom: 8px; margin-bottom: 10px;
+  border-bottom: 1px dashed var(--line-gold);
+}
+.rec-head::before {
+  content: ''; width: 14px; height: 14px; flex: 0 0 auto; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #FFF6DA, #D2A544 60%, #9A6E1E);
+  box-shadow: inset 0 0 0 2px rgba(255,249,240,.7);
 }
 .rec-row {
   display: flex; justify-content: space-between; gap: 10px; align-items: baseline;
-  font-size: 13px; padding: 7px 12px; border-radius: 10px;
-  background: var(--surface-muted); margin-bottom: 6px;
+  font-size: 13px; padding: 8px 12px; border-radius: 10px;
+  background: linear-gradient(90deg, var(--paper-2), #FFFDF8 60%);
+  border-left: 3px solid var(--gold-400); margin-bottom: 6px;
 }
-.rec-row .rec-time { color: var(--text-muted); flex: 0 0 auto; font-size: 12px; }
-.rec-row .rec-prize { color: var(--brand-strong); font-weight: 600; text-align: right; }
-.rec-empty { text-align: center; font-size: 13px; color: var(--text-muted); padding: 12px 0; }
+.rec-row .rec-time { color: var(--ink-soft); flex: 0 0 auto; font-size: 12px; }
+.rec-row .rec-prize { color: var(--red-700); font-weight: 700; text-align: right; }
+.rec-empty { text-align: center; font-size: 13px; color: var(--ink-soft); padding: 16px 0; }
+
+/* ---------------- 页脚 ---------------- */
 .footer {
-  text-align: center; font-size: 12px; color: var(--text-muted);
-  margin-top: 8px; line-height: 1.9;
+  text-align: center; font-size: 12px; line-height: 2;
+  color: rgba(255,246,218,.68); margin-top: 8px;
 }
-.footer a { color: var(--text-muted); text-decoration: none; border-bottom: 1px dashed var(--border); }
-.modal-mask {
-  position: fixed; inset: 0; background: rgba(0,0,0,.55);
-  display: none; align-items: center; justify-content: center; z-index: 50; padding: 24px;
+.footer a {
+  color: rgba(255,246,218,.86); text-decoration: none;
+  border-bottom: 1px dashed rgba(242,210,136,.5); padding-bottom: 1px;
 }
-.modal {
-  background: #fff; border-radius: 18px; padding: 24px 20px;
-  width: 100%; max-width: 340px; text-align: center;
-  animation: pop .28s ease;
+
+/* ---------------- 弹窗 ---------------- */
+.mask {
+  position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+  padding: 24px; z-index: 50;
+  background: radial-gradient(120% 80% at 50% 40%, rgba(78,5,9,.72), rgba(20,2,4,.9));
+  backdrop-filter: blur(2px);
 }
-@keyframes pop { from { transform: scale(.82); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-.modal .tag { font-size: 13px; color: var(--brand-strong); font-weight: 600; }
-.modal .pname { font-size: 21px; font-weight: 800; margin: 8px 0 14px; }
-.modal .pimg { position: relative; }
+.mask.open { display: flex; }
+.modal, .tip-modal {
+  position: relative; width: 100%; max-width: 340px; text-align: center;
+  background: linear-gradient(180deg, #FFFCF4 0%, var(--paper) 60%, var(--paper-2) 100%);
+  border: 1px solid var(--gold-500); border-radius: 20px; padding: 24px 20px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.5), inset 0 0 0 4px rgba(255,246,218,.7), inset 0 0 0 5px rgba(210,165,68,.35);
+  overflow: hidden;
+  animation: pop .3s cubic-bezier(.2,1.2,.4,1);
+}
+.tip-modal { max-width: 304px; }
+@keyframes pop { from { transform: scale(.84) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+/* 金光扫过 */
+.modal::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 55%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255,246,218,.75), transparent);
+  transform: translateX(-160%) skewX(-14deg);
+  animation: sweep 1.5s .25s ease-out 1 both;
+}
+@keyframes sweep { to { transform: translateX(320%) skewX(-14deg); } }
+.fx { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 2; }
+.coin {
+  position: absolute; top: -22px; width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #FFF6DA, #E9C468 55%, #9A6E1E);
+  box-shadow: 0 0 8px rgba(233,196,104,.8);
+  animation: fall 2.6s linear forwards;
+}
+.coin.petal { border-radius: 50% 0 50% 0; background: linear-gradient(140deg, #E23B32, #8E0F18); box-shadow: none; }
+@keyframes fall {
+  0% { transform: translateY(0) rotate(0); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translateY(360px) rotate(420deg); opacity: 0; }
+}
+
+.modal .seal-big {
+  width: 84px; height: 84px; margin: 0 auto 14px; border-radius: 12px;
+  display: grid; grid-template-columns: 1fr 1fr; place-items: center;
+  padding: 8px; transform: rotate(-6deg);
+  background: linear-gradient(160deg, #C8202A, #8E0F18);
+  border: 2px solid var(--gold-400);
+  box-shadow: inset 0 0 0 2px rgba(255,246,218,.5), 0 8px 18px rgba(78,5,9,.35);
+}
+.modal .seal-big span {
+  font-family: var(--font-serif); font-size: 25px; font-weight: 900; color: var(--gold-100);
+  line-height: 1; text-shadow: 0 1px 2px rgba(0,0,0,.35);
+}
+.modal .seal-big.plain { display: flex; align-items: center; justify-content: center; }
+.modal .seal-big.plain span { font-size: 30px; }
+.modal .pname {
+  font-family: var(--font-serif); font-size: 22px; font-weight: 900; letter-spacing: 1px;
+  color: var(--red-700); line-height: 1.35; margin-bottom: 6px; word-break: break-all;
+}
+.modal .flourish {
+  width: 100px; height: 8px; margin: 0 auto 14px;
+  background:
+    radial-gradient(circle at 50% 50%, var(--gold-500) 0 2.4px, transparent 2.8px) center/100% 100% no-repeat,
+    linear-gradient(90deg, transparent, var(--gold-500) 20%, var(--gold-500) 80%, transparent) center/100% 1px no-repeat;
+}
+.modal .pimg { position: relative; margin-bottom: 12px; }
 .modal .pimg img {
-  width: 100%; height: 200px; object-fit: cover;
-  border-radius: 12px; background: var(--surface-muted);
+  display: block; width: 100%; height: 202px; object-fit: cover;
+  border-radius: 12px; background: var(--paper-2);
+  border: 1px solid var(--line-gold); box-shadow: 0 6px 16px rgba(78,5,9,.18);
 }
 .modal .pimg .noimg {
-  width: 100%; height: 200px; border-radius: 12px;
-  background: var(--surface-muted); display: flex; align-items: center;
-  justify-content: center; color: var(--text-muted); font-size: 13px;
+  width: 100%; height: 202px; border-radius: 12px;
+  border: 1px dashed var(--line-gold); background: var(--paper-2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--ink-soft); font-size: 13px; letter-spacing: .5px;
 }
-.modal .nav {
+.nav {
   position: absolute; top: 50%; transform: translateY(-50%);
-  width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(0,0,0,.45); color: #fff; border: none;
-  font-size: 15px; cursor: pointer; display: none;
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--gold-400);
+  background: rgba(78,5,9,.62); color: var(--gold-100);
+  font-size: 16px; line-height: 1; cursor: pointer; z-index: 3;
 }
-.modal .nav.prev { left: 8px; }
-.modal .nav.next { right: 8px; }
-.modal .dots { margin-top: 10px; display: flex; gap: 6px; justify-content: center; }
-.modal .dots i {
-  width: 7px; height: 7px; border-radius: 50%; background: var(--border); display: inline-block;
+.nav:hover { background: rgba(78,5,9,.85); }
+.nav.prev { left: 8px; }
+.nav.next { right: 8px; }
+.dots { display: flex; gap: 6px; justify-content: center; margin-bottom: 4px; }
+.dots i {
+  width: 7px; height: 7px; border-radius: 50%; display: inline-block;
+  background: var(--line); transition: background .2s, transform .2s;
 }
-.modal .dots i.on { background: var(--brand); }
-.modal .cnt {
-  font-size: 12px; color: var(--text-muted); margin-top: 14px;
-}
+.dots i.on { background: var(--gold-500); transform: scale(1.25); }
+.modal .cnt { font-size: 12px; color: var(--ink-soft); line-height: 1.7; margin-top: 10px; letter-spacing: .3px; }
 .modal .close {
-  margin-top: 16px; width: 100%; height: 44px; border: none;
-  border-radius: 12px; background: var(--brand); color: var(--brand-on);
-  font-size: 15px; font-weight: 700; cursor: pointer;
+  width: 100%; height: 48px; margin-top: 14px; cursor: pointer;
+  border: 1px solid var(--gold-700); border-radius: 12px;
+  background: linear-gradient(180deg, #FFF6DA, #E9C468 48%, #C99A33);
+  color: #6B1409; font-family: var(--font-serif); font-size: 17px; font-weight: 800; letter-spacing: 2px;
+  box-shadow: 0 3px 0 var(--gold-700), 0 10px 20px rgba(78,5,9,.22);
 }
-.tip-mask {
-  position: fixed; inset: 0; background: rgba(0,0,0,.5);
-  display: none; align-items: center; justify-content: center; z-index: 60; padding: 32px;
+.modal .close:active { transform: translateY(3px); box-shadow: 0 0 0 var(--gold-700); }
+.tip-modal .tip-text {
+  font-size: 15px; line-height: 1.8; color: var(--ink);
+  padding: 6px 0 4px; letter-spacing: .3px;
 }
-.tip-modal {
-  background: #fff; border-radius: 16px; padding: 24px 20px;
-  width: 100%; max-width: 300px; text-align: center;
-  animation: pop .22s ease;
-}
-.tip-modal .tip-text { font-size: 15px; line-height: 1.6; margin-bottom: 18px; }
 .tip-modal .tip-btn {
-  width: 100%; height: 44px; border: none; border-radius: 12px;
-  background: var(--brand); color: var(--brand-on);
-  font-size: 15px; font-weight: 700; cursor: pointer;
+  width: 100%; height: 46px; margin-top: 16px; cursor: pointer;
+  border: 1px solid var(--gold-700); border-radius: 12px;
+  background: linear-gradient(180deg, #FFF6DA, #E9C468 48%, #C99A33);
+  color: #6B1409; font-family: var(--font-serif); font-size: 16px; font-weight: 800; letter-spacing: 2px;
+  box-shadow: 0 3px 0 var(--gold-700);
 }
+.tip-modal .tip-btn:active { transform: translateY(3px); box-shadow: none; }
+
 .hidden { display: none !important; }
+
+@media (max-width: 360px) {
+  .banner .brand { font-size: 28px; letter-spacing: 4px; }
+  .lantern { width: 36px; height: 70px; }
+  .card { padding: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+}
 </style>
 </head>
 <body>
+
+<!-- 共用渐变定义 -->
+<svg class="svg-defs" aria-hidden="true" focusable="false">
+  <defs>
+    <linearGradient id="gGold" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF6DA"/><stop offset="45%" stop-color="#E9C468"/><stop offset="100%" stop-color="#9A6E1E"/>
+    </linearGradient>
+    <linearGradient id="gPointer" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFF9E6"/><stop offset="55%" stop-color="#E9C468"/><stop offset="100%" stop-color="#C99A33"/>
+    </linearGradient>
+    <radialGradient id="gHub" cx="34%" cy="28%" r="80%">
+      <stop offset="0%" stop-color="#FFF9E6"/><stop offset="45%" stop-color="#F2D288"/><stop offset="100%" stop-color="#9A6E1E"/>
+    </radialGradient>
+    <radialGradient id="gRed" cx="50%" cy="42%" r="60%">
+      <stop offset="0%" stop-color="#E23B32"/><stop offset="100%" stop-color="#A8121C"/>
+    </radialGradient>
+  </defs>
+</svg>
+
+<div class="bg-layer" id="bgLayer" aria-hidden="true"></div>
+
 <div class="wrap">
 
-  <div class="banner">
-    <span class="period" id="periodBadge">活动进行中</span>
-    <h1 id="periodTitle">幸运大转盘</h1>
-    <div class="dates" id="periodDates"></div>
-  </div>
+  <header class="banner">
+    <svg class="lantern l" viewBox="0 0 46 86" aria-hidden="true" focusable="false">
+      <line x1="23" y1="0" x2="23" y2="15" stroke="#D2A544" stroke-width="2"/>
+      <rect x="12" y="13" width="22" height="6" rx="3" fill="url(#gGold)"/>
+      <ellipse cx="23" cy="45" rx="20" ry="23" fill="url(#gRed)" stroke="#E9C468" stroke-width="1.4"/>
+      <path d="M23 22c-7 6-7 40 0 46M23 22c7 6 7 40 0 46" fill="none" stroke="rgba(255,246,218,.5)" stroke-width="1.1"/>
+      <rect x="12" y="65" width="22" height="6" rx="3" fill="url(#gGold)"/>
+      <line x1="23" y1="71" x2="23" y2="80" stroke="#D2A544" stroke-width="2"/>
+      <circle cx="23" cy="81.5" r="4" fill="url(#gGold)"/>
+    </svg>
+    <svg class="lantern r" viewBox="0 0 46 86" aria-hidden="true" focusable="false">
+      <line x1="23" y1="0" x2="23" y2="15" stroke="#D2A544" stroke-width="2"/>
+      <rect x="12" y="13" width="22" height="6" rx="3" fill="url(#gGold)"/>
+      <ellipse cx="23" cy="45" rx="20" ry="23" fill="url(#gRed)" stroke="#E9C468" stroke-width="1.4"/>
+      <path d="M23 22c-7 6-7 40 0 46M23 22c7 6 7 40 0 46" fill="none" stroke="rgba(255,246,218,.5)" stroke-width="1.1"/>
+      <rect x="12" y="65" width="22" height="6" rx="3" fill="url(#gGold)"/>
+      <line x1="23" y1="71" x2="23" y2="80" stroke="#D2A544" stroke-width="2"/>
+      <circle cx="23" cy="81.5" r="4" fill="url(#gGold)"/>
+    </svg>
 
-  <!-- 问卷卡 -->
-  <div class="card" id="formCard">
+    <h1 class="brand">幸运大转盘</h1>
+    <div class="rule" aria-hidden="true"></div>
+    <div class="meta">
+      <span class="seal" id="periodBadge">活动进行中</span>
+      <span class="period-name" id="periodTitle"></span>
+    </div>
+    <div class="dates" id="periodDates"></div>
+  </header>
+
+  <!-- 参与问卷 -->
+  <section class="card" id="formCard">
     <h2>参与问卷</h2>
-    <div class="sub">填写后即可抽奖 · 一个出单手机号限 <b id="maxDrawsText">1</b> 次（同一工号可对应多个出单手机号）</div>
+    <div class="sub">填写后即可解锁转盘 · 一个出单手机号限 <b id="maxDrawsText">1</b> 次（同一工号可对应多个出单手机号）</div>
     <div class="err" id="formErr"></div>
     <div class="field" id="f_name">
       <label>真实姓名 <em>*</em></label>
@@ -207,44 +447,37 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     </div>
     <div class="field" id="f_phone">
       <label>出单手机号 <em>*</em></label>
-      <input id="inpPhone" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric">
+      <input id="inpPhone" type="tel" maxlength="11" placeholder="请输入 11 位手机号" inputmode="numeric" autocomplete="tel">
     </div>
     <div class="field" id="f_gonghao">
       <label>工号 <em>*</em></label>
       <input id="inpGonghao" type="text" placeholder="如 YD99999">
     </div>
-    <button class="btn" id="formSubmit">提交问卷 · 解锁转盘</button>
+    <button class="btn" id="formSubmit" type="button">提交问卷 · 解锁转盘</button>
     <div class="note">问卷信息仅用于本次抽奖核验与兑奖</div>
-  </div>
+  </section>
 
-  <!-- 转盘卡 -->
-  <div class="card" id="wheelCard">
-    <div class="ok-banner" id="whoBanner">✓ 已参与</div>
-    <div class="wheel-area">
-      <div class="pin"></div>
-      <svg id="wheelSvg" viewBox="0 0 300 310" width="300" height="310" role="img" aria-label="幸运大转盘">
-        <g id="wheelSpin">
-          <circle cx="150" cy="150" r="142" fill="#f0f0f3" stroke="#ddd"></circle>
-          <g id="slices"></g>
-          <circle cx="150" cy="150" r="44" fill="#fff" stroke="#E23B32" stroke-width="3"></circle>
-        </g>
-        <circle cx="150" cy="150" r="4" fill="#E23B32"></circle>
-      </svg>
-      <button id="spinBtn" type="button">抽奖</button>
+  <!-- 转盘 -->
+  <section class="card hero" id="wheelCard">
+    <div class="who" id="whoBanner">已参与 · 点击中心「抽」开始转盘</div>
+
+    <div class="wheel-area" id="wheelArea">
+      <!-- 转盘外观由 templates.js 的抽奖模板渲染（后台可切换模板） -->
     </div>
+
     <div class="status-row">
-      <span>剩余抽奖次数</span>
-      <span><b id="leftCnt">0</b> 次</span>
-      <span id="joinedCnt">已参与 0 人</span>
+      <span class="left">本期已参与<br><b id="joinedCnt">0 人</b></span>
+      <span class="mid">剩余次数<b id="leftCnt">0</b></span>
+      <span class="right">奖品以实物为准<br>中奖请保留截图</span>
     </div>
-  </div>
+  </section>
 
   <!-- 抽奖记录 -->
-  <div class="card" id="recordCard">
+  <section class="card" id="recordCard">
     <h2>抽奖记录</h2>
     <div class="sub" id="recSub">每期抽奖记录都会保留</div>
     <div id="recList"></div>
-  </div>
+  </section>
 
   <div class="footer">
     奖品以实物为准 · 中奖结果请保留截图<br>
@@ -252,24 +485,28 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
   </div>
 </div>
 
-<!-- 通用提示弹窗 -->
-<div class="tip-mask" id="tipMask">
+<!-- 通用提示 -->
+<div class="mask" id="tipMask" role="alertdialog" aria-modal="true" aria-live="polite">
   <div class="tip-modal">
     <div class="tip-text" id="tipText"></div>
     <button class="tip-btn" id="tipBtn" type="button">我知道了</button>
   </div>
 </div>
 
-<!-- 结果弹窗 -->
-<div class="modal-mask" id="modalMask">
+<!-- 中奖结果 -->
+<div class="mask" id="modalMask" role="dialog" aria-modal="true" aria-labelledby="mName">
   <div class="modal">
-    <div class="tag">恭喜中奖</div>
+    <div class="fx" id="fx" aria-hidden="true"></div>
+    <div class="seal-big" id="mSeal" aria-hidden="true">
+      <span>恭</span><span>喜</span><span>中</span><span>奖</span>
+    </div>
     <div class="pname" id="mName"></div>
+    <div class="flourish" aria-hidden="true"></div>
     <div class="pimg">
       <div class="noimg" id="mNoimg">奖品图片加载中…</div>
       <img id="mImg" alt="奖品图" style="display:none">
-      <button class="nav prev" id="mPrev" type="button">‹</button>
-      <button class="nav next" id="mNext" type="button">›</button>
+      <button class="nav prev" id="mPrev" type="button" aria-label="上一张">‹</button>
+      <button class="nav next" id="mNext" type="button" aria-label="下一张">›</button>
     </div>
     <div class="dots" id="mDots"></div>
     <div class="cnt">中奖记录已保存，凭手机号核对兑奖</div>
@@ -277,6 +514,7 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
   </div>
 </div>
 
+<script src="templates.js"></script>
 <script>
 (function () {
   'use strict';
@@ -288,8 +526,9 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     return {
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
-      start: '', end: '',                 // 'YYYY-MM-DDTHH:mm'，end 即抽奖截止时间，留空不限制
-      bgUrl: '',                          // 背景图链接（全站生效）；本机上传的背景图优先
+      template: 'wheel-bing',
+      start: '', end: '',
+      bgUrl: '',
       maxDraws: 1,
       needForm: true,
       formFields: { name: true, base: true, phone: true, gonghao: true },
@@ -314,6 +553,7 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
       if (!c.prizes || !c.prizes.length) c.prizes = defaultConfig().prizes;
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
+      if (c.template === undefined) c.template = 'wheel-bing';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -334,8 +574,7 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     return dbp.then(function (db) {
       return new Promise(function (res) {
         if (!db) return res(null);
-        var tx = db.transaction(IDB_STORE, 'readonly');
-        var g = tx.objectStore(IDB_STORE).get(key);
+        var g = db.transaction(IDB_STORE, 'readonly').objectStore(IDB_STORE).get(key);
         g.onsuccess = function () { res(g.result || null); };
         g.onerror = function () { res(null); };
       });
@@ -350,61 +589,72 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     var t = new Date(d), p = function (n) { return (n < 10 ? '0' : '') + n; };
     return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate()) + ' ' + p(t.getHours()) + ':' + p(t.getMinutes());
   }
-  function shortName(name) {
-    var s = (name || '').split(/[\s·：:，,]+/)[0];
-    return s.length > 5 ? s.slice(0, 4) + '…' : s;
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
   }
-  /* 当期记录：跨期保留历史，但抽奖资格按当期计算 */
+  function reduceMotion() {
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }
+
+  /* ---------- 页面状态 ---------- */
+  var cfg = getConfig();
+  var spinning = false;
+  var who = null; // {phone,name,base,gonghao}
+
   function periodRecords() {
     return getRecords().filter(function (r) { return (r.period || '') === (cfg.period || ''); });
   }
   function usedCount(phone) {
     return periodRecords().filter(function (r) { return r.phone === phone; }).length;
   }
+  function isExpired() {
+    return !!(cfg.end && Date.now() > new Date(cfg.end).getTime());
+  }
+  function inTimeWindow() {
+    var now = Date.now();
+    if (cfg.start && now < new Date(cfg.start).getTime()) return false;
+    if (cfg.end && now > new Date(cfg.end).getTime()) return false;
+    return true;
+  }
 
-  /* ---------- 页面状态 ---------- */
-  var cfg = getConfig();
-  var currentDeg = 0;
-  var spinning = false;
-  var who = null; // {phone,name,base,gonghao}
-
-  /* ---------- 头部与卡片 ---------- */
-  $('periodTitle').textContent = cfg.period || '幸运大转盘';
+  /* ---------- 题头 ---------- */
   var expired = isExpired();
   $('periodBadge').textContent = expired ? '已截止' : '活动进行中';
+  $('periodTitle').textContent = cfg.period || '';
+  if (!cfg.period) $('periodTitle').classList.add('hidden');
   var dateTxt = [];
   if (cfg.start) dateTxt.push('开始 ' + fmtDate(cfg.start));
   if (cfg.end) dateTxt.push('抽奖截止 ' + fmtDate(cfg.end));
   $('periodDates').textContent = dateTxt.length ? dateTxt.join(' · ') : '活动长期有效';
   $('maxDrawsText').textContent = cfg.maxDraws || 1;
-  $('joinedCnt').textContent = '本期已参与 ' + periodRecords().length + ' 人';
+  $('joinedCnt').textContent = periodRecords().length + ' 人';
   $('recSub').textContent = (cfg.poolName || '奖池') + ' · 每期抽奖记录都会保留';
 
-  function isExpired() {
-    return !!(cfg.end && Date.now() > new Date(cfg.end).getTime());
-  }
-
-  /* ---------- 通用提示弹窗 ---------- */
+  /* ---------- 弹窗开合 ---------- */
+  function openMask(el) { el.classList.add('open'); }
+  function closeMask(el) { el.classList.remove('open'); }
   function showTip(msg) {
     $('tipText').textContent = msg;
-    $('tipMask').style.display = 'flex';
+    openMask($('tipMask'));
+    $('tipBtn').focus();
   }
-  $('tipBtn').addEventListener('click', function () { $('tipMask').style.display = 'none'; });
+  $('tipBtn').addEventListener('click', function () { closeMask($('tipMask')); });
   $('tipMask').addEventListener('click', function (ev) {
-    if (ev.target === $('tipMask')) $('tipMask').style.display = 'none';
+    if (ev.target === $('tipMask')) closeMask($('tipMask'));
   });
 
-  /* ---------- 背景图：优先用已发布到仓库的背景（所有人可见） ---------- */
+  /* ---------- 背景图 ---------- */
   var PUBLISHED_BG = 'assets/bg.jpg';
   function paintBg(src) {
-    document.body.style.backgroundImage = 'url("' + src + '")';
+    $('bgLayer').style.backgroundImage = 'url("' + src + '")';
     document.body.classList.add('has-bg');
   }
   function applyBg() {
     var probe = new Image();
     probe.onload = function () { paintBg(PUBLISHED_BG); };
     probe.onerror = function () {
-      // 回退：本机上传的背景图 → 配置里的图片链接
       idbGet('bg::0').then(function (img) {
         var src = img || cfg.bgUrl;
         if (src) paintBg(src);
@@ -413,12 +663,7 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     probe.src = PUBLISHED_BG;
   }
 
-  /* ---------- 抽奖记录（按期数+奖池分组，每期保留） ---------- */
-  function esc(s) {
-    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
-    });
-  }
+  /* ---------- 抽奖记录（按期数+奖池分组） ---------- */
   function renderRecords() {
     var box = $('recList');
     var list = getRecords();
@@ -441,6 +686,7 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     box.innerHTML = html;
   }
 
+  /* ---------- 问卷 ---------- */
   function buildForm() {
     var ff = cfg.formFields || {};
     $('f_name').classList.toggle('hidden', !ff.name);
@@ -455,18 +701,9 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
       sel.appendChild(o);
     });
   }
-
   function showErr(msg) { var e = $('formErr'); e.textContent = msg; e.style.display = 'block'; }
   function hideErr() { $('formErr').style.display = 'none'; }
 
-  function inTimeWindow() {
-    var now = Date.now();
-    if (cfg.start && now < new Date(cfg.start).getTime()) return false;
-    if (cfg.end && now > new Date(cfg.end).getTime()) return false;
-    return true;
-  }
-
-  /* ---------- 提交问卷 ---------- */
   $('formSubmit').addEventListener('click', function () {
     hideErr();
     var ff = cfg.formFields || {};
@@ -482,67 +719,39 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     if (ff.phone) {
       if (!/^\d{11}$/.test(phone)) { showTip('请检查您输入的手机号是否有误'); return; }
     } else { phone = ''; }
-    if (phone) {
-      var cnt = usedCount(phone);
-      if (cnt >= (cfg.maxDraws || 1)) {
-        return showErr('该出单手机号已参与本期抽奖（一个出单手机号仅可抽一次）');
-      }
+    if (phone && usedCount(phone) >= (cfg.maxDraws || 1)) {
+      return showErr('该出单手机号已参与本期抽奖（一个出单手机号仅可抽一次）');
     }
     if (!cfg.prizes.some(function (p) { return p.stock === null || p.stock > 0; })) {
       return showErr('本期奖品已全部抽完，感谢参与');
     }
 
     who = { phone: phone, name: name, base: base, gonghao: gonghao };
-    if (phone) {
-      var nFinish = usedCount(phone);
-      $('whoBanner').textContent = '✓ 问卷已提交 · ' + (name || '') + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '');
-      $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - nFinish);
-    } else {
-      $('whoBanner').textContent = '✓ 问卷已提交';
-    }
+    var left = phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(phone)) : (cfg.maxDraws || 1);
+    $('whoBanner').textContent = '问卷已提交 · ' + (name || '参与者') + (base ? ' · ' + base : '') + (phone ? ' · ' + maskPhone(phone) : '');
+    $('leftCnt').textContent = left;
+    if (left <= 0) setSpinUsed();
     $('formCard').classList.add('hidden');
     $('wheelCard').classList.remove('hidden');
+    $('wheelCard').scrollIntoView({ behavior: reduceMotion() ? 'auto' : 'smooth', block: 'center' });
     renderRecords();
   });
 
-  /* ---------- 转盘 ---------- */
-  var PALETTE = [
-    { f: '#C1121F', t: '#ffffff' },
-    { f: '#FFD9D3', t: '#7A0B02' },
-    { f: '#E63946', t: '#ffffff' },
-    { f: '#FFB3A7', t: '#7A0B02' },
-    { f: '#EFEFF2', t: '#4a4a55' }
-  ];
+  /* ---------- 抽奖模板（外观由 templates.js 提供，后台可切换） ---------- */
+  LuckyTemplates.inject();
+  var tpl = LuckyTemplates.get(cfg.template);
 
-  function drawWheel() {
-    var prizes = cfg.prizes.slice(0, 10);
-    var n = prizes.length;
-    if (n < 2) n = 2;
-    var g = $('slices');
-    var html = '';
-    var cx = 150, cy = 150, R = 142, seg = 360 / n;
-    for (var i = 0; i < n; i++) {
-      var a0 = (-90 + i * seg) * Math.PI / 180;
-      var a1 = (-90 + (i + 1) * seg) * Math.PI / 180;
-      var x0 = cx + R * Math.cos(a0), y0 = cy + R * Math.sin(a0);
-      var x1 = cx + R * Math.cos(a1), y1 = cy + R * Math.sin(a1);
-      var mid = (-90 + i * seg + seg / 2) * Math.PI / 180;
-      var rt = n > 8 ? 92 : 98;
-      var tx = cx + rt * Math.cos(mid);
-      var ty = cy + rt * Math.sin(mid);
-      var col = PALETTE[i % PALETTE.length];
-      var label = shortName(prizes[i] ? prizes[i].name : '');
-      html += '<path d="M' + cx + ' ' + cy + ' L' + x0.toFixed(2) + ' ' + y0.toFixed(2)
-        + ' A' + R + ' ' + R + ' 0 0 1 ' + x1.toFixed(2) + ' ' + y1.toFixed(2) + ' Z" fill="' + col.f + '" stroke="#fff" stroke-width="2"></path>';
-      html += '<text x="' + tx.toFixed(1) + '" y="' + ty.toFixed(1)
-        + '" text-anchor="middle" dominant-baseline="middle" font-size="' + (n > 8 ? 11 : 13)
-        + '" font-weight="700" fill="' + col.t + '">' + label + '</text>';
-    }
-    g.innerHTML = html;
+  function isVoid(p) { return !!p && /谢谢|未中奖|再来一次/.test(p.name || ''); }
+
+  /* 只把模板能展示的奖品放进奖池，保证「看得见 = 抽得到」 */
+  function activePrizes() { return cfg.prizes.slice(0, tpl.slots || 10); }
+
+  function renderStage() {
+    tpl.render($('wheelArea'), activePrizes());
   }
 
   function pickPrize() {
-    var avail = cfg.prizes.filter(function (p) { return p.stock === null || p.stock > 0; });
+    var avail = activePrizes().filter(function (p) { return p.stock === null || p.stock > 0; });
     var total = avail.reduce(function (s, p) { return s + (parseFloat(p.prob) || 0); }, 0);
     if (!avail.length || total <= 0) return null;
     var r = Math.random() * total;
@@ -553,67 +762,83 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     return avail[avail.length - 1];
   }
 
-  $('spinBtn').addEventListener('click', function () {
-    if (spinning) return;
-    if (!inTimeWindow()) { showTip(isExpired() ? '本期抽奖已截止' : '活动尚未开始'); return; }
-    if (who && who.phone) {
-      var used = usedCount(who.phone);
-      if (used >= (cfg.maxDraws || 1)) {
+  function spinBtnEl() { return $('wheelArea').querySelector('.lw-spin-btn'); }
+
+  function setSpinUsed(label) {
+    var b = spinBtnEl();
+    if (!b) return;
+    b.disabled = true;
+    b.textContent = label || '已用完';
+    if (label) b.removeAttribute('data-state');
+    else b.setAttribute('data-state', 'used');
+  }
+
+  function bindSpin() {
+    var b = spinBtnEl();
+    if (!b) return;
+    b.addEventListener('click', function () {
+      if (spinning) return;
+      if (!inTimeWindow()) { showTip(isExpired() ? '本期抽奖已截止' : '活动尚未开始'); return; }
+      if (who && who.phone && usedCount(who.phone) >= (cfg.maxDraws || 1)) {
         showTip('该出单手机号已抽过奖，一个出单手机号仅可抽一次');
         return;
       }
-    }
-    var prize = pickPrize();
-    if (!prize) { showTip('本期奖品已抽完'); return; }
+      var prize = pickPrize();
+      if (!prize) { showTip('本期奖品已抽完'); return; }
 
-    spinning = true;
-    $('spinBtn').disabled = true;
-    var n = Math.min(cfg.prizes.length, 10);
-    var idx = cfg.prizes.indexOf(prize);
-    var seg = 360 / n;
-    var jitter = (Math.random() - 0.5) * seg * 0.5;
-    var target = 360 - (idx * seg + seg / 2 + jitter);
-    var delta = (target - (currentDeg % 360) + 360) % 360;
-    if (delta <= 0) delta += 360;
-    currentDeg += 5 * 360 + delta;
+      spinning = true;
+      b.disabled = true;
+      var idx = activePrizes().indexOf(prize);
 
-    var wheel = $('wheelSpin');
-      var from = currentDeg - (5 * 360 + delta);
-      wheel.style.transition = 'none';
-      wheel.style.transform = 'rotate(' + from + 'deg)';
-      void wheel.offsetWidth; // 强制回流，确保先回到上次停留角度
-      wheel.style.transition = '';
-      wheel.style.transform = 'rotate(' + currentDeg + 'deg)';
+      tpl.spin($('wheelArea'), idx, function () {
+        spinning = false;
+        if (prize.stock !== null && prize.stock !== undefined) {
+          prize.stock -= 1;
+          saveConfig(cfg);
+        }
+        if (who) {
+          addRecord({
+            phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
+            prizeId: prize.id, prize: prize.name,
+            period: cfg.period, pool: cfg.poolName || '进阶奖池',
+            submitTime: new Date().toISOString()
+          });
+        }
+        $('joinedCnt').textContent = periodRecords().length + ' 人';
+        var left = who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
+        $('leftCnt').textContent = left;
+        renderRecords();
+        if (left <= 0) setSpinUsed();
+        showModal(prize);
+      });
+    });
+  }
 
-    setTimeout(function () {
-      spinning = false;
-      if (prize.stock !== null) {
-        prize.stock -= 1;
-        saveConfig(cfg);
-      }
-      if (who) {
-        addRecord({
-          phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
-          prizeId: prize.id, prize: prize.name,
-          period: cfg.period, pool: cfg.poolName || '进阶奖池',
-          submitTime: new Date().toISOString()
-        });
-      }
-      $('joinedCnt').textContent = '本期已参与 ' + periodRecords().length + ' 人';
-      if (who && who.phone) {
-        var used = usedCount(who.phone);
-        $('leftCnt').textContent = Math.max(0, (cfg.maxDraws || 1) - used);
-        if (used >= (cfg.maxDraws || 1)) { $('spinBtn').disabled = true; $('spinBtn').textContent = '已用完'; }
-      }
-      renderRecords();
-      showModal(prize);
-    }, 4350);
-  });
-
-  /* ---------- 结果弹窗（图文轮播） ---------- */
+  /* ---------- 中奖弹窗 ---------- */
   var modalImgs = [], modalIdx = 0;
+  function burstCoins() {
+    var fx = $('fx');
+    fx.innerHTML = '';
+    for (var i = 0; i < 22; i++) {
+      var s = document.createElement('span');
+      var coin = i % 3 !== 0;
+      s.className = 'coin' + (coin ? '' : ' petal');
+      s.style.left = (Math.random() * 92) + '%';
+      s.style.animationDelay = (Math.random() * 0.9).toFixed(2) + 's';
+      s.style.animationDuration = (1.9 + Math.random() * 1.3).toFixed(2) + 's';
+      if (!coin) s.style.width = s.style.height = '10px';
+      fx.appendChild(s);
+    }
+    setTimeout(function () { fx.innerHTML = ''; }, 4200);
+  }
   function showModal(prize) {
+    var voidHit = isVoid(prize);
+    var seal = $('mSeal');
+    seal.classList.toggle('plain', voidHit);
+    seal.innerHTML = voidHit ? '<span>再来</span>' : '<span>恭</span><span>喜</span><span>中</span><span>奖</span>';
+    seal.setAttribute('aria-hidden', 'true');
     $('mName').textContent = prize.name;
+
     $('mImg').style.display = 'none';
     $('mNoimg').style.display = 'flex';
     $('mNoimg').textContent = '奖品图片加载中…';
@@ -621,7 +846,9 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     $('mPrev').style.display = 'none';
     $('mNext').style.display = 'none';
     $('mDots').innerHTML = '';
-    $('modalMask').style.display = 'flex';
+    openMask($('modalMask'));
+    if (!voidHit && !reduceMotion()) burstCoins();
+    $('mClose').focus();
 
     var keys = [];
     for (var i = 0; i < 5; i++) keys.push(prize.id + '::' + i);
@@ -654,8 +881,11 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     modalIdx = (modalIdx + 1) % modalImgs.length;
     renderModalImg();
   });
-  $('mClose').addEventListener('click', function () {
-    $('modalMask').style.display = 'none';
+  $('mClose').addEventListener('click', function () { closeMask($('modalMask')); });
+  document.addEventListener('keydown', function (ev) {
+    if (ev.key !== 'Escape') return;
+    closeMask($('modalMask'));
+    closeMask($('tipMask'));
   });
 
   /* ---------- 初始化 ---------- */
@@ -664,18 +894,17 @@ body.has-bg .banner h1, body.has-bg .banner .dates { text-shadow: 0 1px 8px rgba
     buildForm();
   } else {
     $('formCard').classList.add('hidden');
-    $('whoBanner').textContent = '✓ 活动进行中，直接开抽';
     $('leftCnt').textContent = cfg.maxDraws || 1;
   }
+  applyBg();
+  renderStage();
+  bindSpin();
   if (expired) {
     $('formSubmit').disabled = true;
     $('formSubmit').textContent = '抽奖已截止';
-    $('spinBtn').disabled = true;
-    $('spinBtn').textContent = '已截止';
+    setSpinUsed('已截止');
   }
-  applyBg();
   renderRecords();
-  drawWheel();
 })();
 </script>
 </body>
