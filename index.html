@@ -520,7 +520,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
       peakPoolName: '巅峰奖池',
-      template: 'wheel-bing',
+      template: 'wheel-festive',
       minAmount: 999,
       peakAmount: 20000,
       start: '', end: '',
@@ -555,7 +555,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       if (!c.prizes || !c.prizes.length) c.prizes = defaultConfig().prizes;
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
-      if (c.template === undefined) c.template = 'wheel-bing';
+      if (c.template === undefined) c.template = 'wheel-festive';
       if (c.peakPoolName === undefined) c.peakPoolName = '巅峰奖池';
       if (!c.peakPrizes || !c.peakPrizes.length) c.peakPrizes = defaultConfig().peakPrizes;
       if (c.minAmount === undefined) c.minAmount = 999;
@@ -787,8 +787,35 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
   /* 只把模板能展示的奖品放进奖池，保证「看得见 = 抽得到」 */
   function activePrizes() { return poolPrizes().slice(0, tpl.slots || 10); }
 
+  /* 奖品图：优先用后台给该奖品上传的主图，其次尝试仓库里已发布的奖品图 */
+  function prizeImage(prize) {
+    if (!prize || !prize.id) return Promise.resolve(null);
+    return idbGet(prize.id + '::0').then(function (local) {
+      if (local) return local;
+      var rel = 'assets/prizes/' + prize.id + '.jpg';
+      return new Promise(function (res) {
+        var probe = new Image();
+        probe.onload = function () { res(rel); };
+        probe.onerror = function () { res(null); };
+        probe.src = rel;
+      });
+    });
+  }
+
+  function baseLeftText() {
+    var left = who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
+    return left > 0 ? '你还可以抽奖 ' + left + ' 次' : '本期抽奖次数已用完';
+  }
+  function updateBaseText() {
+    var el = $('wheelArea').querySelector('.lw-base-text');
+    if (el) el.textContent = baseLeftText();
+  }
+
   function renderStage() {
-    tpl.render($('wheelArea'), activePrizes());
+    tpl.render($('wheelArea'), activePrizes(), {
+      getImage: prizeImage,
+      leftText: baseLeftText()
+    });
   }
 
   function pickPrize() {
@@ -849,6 +876,7 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
         $('joinedCnt').textContent = periodRecords().length + ' 人';
         var left = who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
         $('leftCnt').textContent = left;
+        updateBaseText();
         renderRecords();
         if (left <= 0) setSpinUsed();
         showModal(prize);

@@ -492,7 +492,7 @@ td { word-break: break-all; }
       period: '宠粉日第 88 期',
       poolName: '进阶奖池',
       peakPoolName: '巅峰奖池',
-      template: 'wheel-bing',
+      template: 'wheel-festive',
       minAmount: 999,
       peakAmount: 20000,
       start: '', end: '',
@@ -526,7 +526,7 @@ td { word-break: break-all; }
       var c = JSON.parse(raw);
       if (c.poolName === undefined) c.poolName = '进阶奖池';
       if (c.bgUrl === undefined) c.bgUrl = '';
-      if (c.template === undefined) c.template = 'wheel-bing';
+      if (c.template === undefined) c.template = 'wheel-festive';
       if (c.peakPoolName === undefined) c.peakPoolName = '巅峰奖池';
       if (!c.peakPrizes || !c.peakPrizes.length) c.peakPrizes = defaultConfig().peakPrizes;
       if (c.minAmount === undefined) c.minAmount = 999;
