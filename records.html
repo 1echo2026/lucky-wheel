@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#7A0A12">
+<title>抽奖记录 · 宠粉日</title>
+<style>
+/* ============================================================
+   国潮喜庆红金 · 与抽奖页同一套令牌
+   ============================================================ */
+:root {
+  --red-900: #4E0509;
+  --red-800: #6E0910;
+  --red-700: #8E0F18;
+  --red-600: #B3121B;
+  --red-500: #C8202A;
+  --gold-100: #FFF6DA;
+  --gold-200: #FFE9A8;
+  --gold-300: #F2D288;
+  --gold-400: #E9C468;
+  --gold-500: #D2A544;
+  --gold-700: #9A6E1E;
+  --gold-ink: #8A5F16;
+  --paper: #FFF9F0;
+  --paper-2: #FDF1DF;
+  --ink: #3A1A12;
+  --ink-soft: #80604F;
+  --line: #EADAC0;
+  --line-gold: rgba(210,165,68,.55);
+
+  --font-serif: "STZhongsong", "Songti SC", "STSong", "SimSun", "Noto Serif SC", serif;
+  --font-sans: "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  --radius: 18px;
+  --shadow-card: 0 12px 32px rgba(78,5,9,.22);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  min-height: 100vh;
+  background-color: var(--red-800);
+  background-image: radial-gradient(120% 55% at 50% 0%, #C8202A 0%, #96101A 40%, #5E070D 100%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='none' stroke='%23F2D288' stroke-width='1.1' stroke-linecap='round'%3E%3Cpath d='M8 40q0-11 11-11 1-9 11-9t11 9q11 0 11 11t-11 11H19Q8 51 8 40z'/%3E%3Ccircle cx='24' cy='40' r='3.2'/%3E%3Cpath d='M58 12q0-6 6-6t6 6-6 6h-6'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 72px 72px;
+  opacity: .07;
+}
+.bg-layer {
+  position: fixed; inset: 0; z-index: -1; display: none;
+  background-size: cover; background-position: center top; background-repeat: no-repeat;
+}
+.bg-layer::after {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(78,5,9,.62) 0%, rgba(78,5,9,.30) 38%, rgba(78,5,9,.72) 100%);
+}
+body.has-bg .bg-layer { display: block; }
+
+.wrap {
+  position: relative; z-index: 1;
+  max-width: 520px; margin: 0 auto;
+  padding: 18px 16px calc(40px + env(safe-area-inset-bottom));
+}
+
+/* 题头 */
+.head { text-align: center; padding: 8px 0 20px; }
+.head .seal {
+  display: inline-block; padding: 4px 12px; border-radius: 6px;
+  font-family: var(--font-serif); font-size: 13px; font-weight: 700; letter-spacing: 1px;
+  color: var(--gold-100); background: linear-gradient(180deg, #C8202A, #8E0F18);
+  border: 1px solid var(--gold-400);
+  box-shadow: inset 0 0 0 1px rgba(255,246,218,.35), 0 3px 10px rgba(0,0,0,.3);
+}
+.head h1 {
+  margin-top: 10px;
+  font-family: var(--font-serif); font-size: 28px; font-weight: 900; letter-spacing: 4px;
+  background: linear-gradient(180deg, #FFF6DA 8%, #F2D288 46%, #C99A33 78%, #FFE9A8 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: #F2D288;
+  filter: drop-shadow(0 2px 0 rgba(78,5,9,.55)) drop-shadow(0 8px 16px rgba(0,0,0,.35));
+}
+.head .meta {
+  margin-top: 10px; font-size: 12px; letter-spacing: .5px;
+  color: rgba(255,246,218,.82); text-shadow: 0 1px 6px rgba(0,0,0,.45);
+}
+
+/* 宣纸卡片 */
+.card {
+  position: relative; background: var(--paper);
+  border: 1px solid var(--line-gold); border-radius: var(--radius);
+  padding: 20px; margin-bottom: 16px; box-shadow: var(--shadow-card);
+}
+.card::after {
+  content: ''; position: absolute; inset: 6px; border-radius: 12px;
+  border: 1px solid rgba(210,165,68,.26); pointer-events: none;
+}
+.card > * { position: relative; z-index: 1; }
+.card h2 {
+  font-family: var(--font-serif); font-size: 18px; font-weight: 800; letter-spacing: 1px;
+  color: var(--red-700); display: flex; align-items: center; gap: 8px;
+}
+.card h2::before {
+  content: ''; width: 8px; height: 8px; flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--gold-200), var(--gold-500));
+  transform: rotate(45deg); border-radius: 1px;
+}
+.card .sub { font-size: 12px; color: var(--ink-soft); margin: 8px 0 16px; line-height: 1.7; }
+.card .sub b { color: var(--gold-ink); }
+
+/* 记录分组 */
+.rec-group { margin-bottom: 16px; }
+.rec-group:last-child { margin-bottom: 0; }
+.rec-head {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-serif); font-size: 14px; font-weight: 700;
+  color: var(--red-700); padding-bottom: 8px; margin-bottom: 10px;
+  border-bottom: 1px dashed var(--line-gold);
+}
+.rec-head::before {
+  content: ''; width: 14px; height: 14px; flex: 0 0 auto; border-radius: 50%;
+  background: radial-gradient(circle at 36% 32%, #FFF6DA, #D2A544 60%, #9A6E1E);
+  box-shadow: inset 0 0 0 2px rgba(255,249,240,.7);
+}
+.rec-head .cnt {
+  margin-left: auto; font-family: var(--font-sans); font-size: 11px; font-weight: 500;
+  color: var(--gold-ink); background: var(--paper-2); border: 1px solid var(--line-gold);
+  border-radius: 999px; padding: 1px 8px;
+}
+.rec-row {
+  padding: 10px 12px; border-radius: 10px; margin-bottom: 8px;
+  background: linear-gradient(90deg, var(--paper-2), #FFFDF8 60%);
+  border-left: 3px solid var(--gold-400);
+}
+.rec-row .rec-prize {
+  font-size: 14px; font-weight: 700; color: var(--red-700); line-height: 1.45;
+}
+.rec-row .rec-meta {
+  margin-top: 5px; display: flex; flex-wrap: wrap; gap: 6px 14px;
+  font-size: 12px; color: var(--ink-soft);
+}
+.rec-row .rec-meta .k { color: var(--gold-ink); }
+.rec-empty { text-align: center; font-size: 13px; color: var(--ink-soft); padding: 22px 0; line-height: 1.9; }
+
+/* 按钮 */
+.btn {
+  width: 100%; height: 50px; border: 1px solid var(--gold-700); border-radius: 12px;
+  background: linear-gradient(180deg, #FFF6DA 0%, #E9C468 46%, #C99A33 100%);
+  color: #6B1409; font-family: var(--font-serif);
+  font-size: 17px; font-weight: 800; letter-spacing: 2px; cursor: pointer;
+  box-shadow: 0 3px 0 var(--gold-700), 0 10px 22px rgba(78,5,9,.28);
+  transition: transform .12s ease, box-shadow .12s ease, filter .18s;
+}
+.btn-link { display: flex; align-items: center; justify-content: center; text-decoration: none; box-sizing: border-box; }
+.btn:hover { filter: brightness(1.05); }
+.btn:active { transform: translateY(3px); box-shadow: 0 0 0 var(--gold-700), 0 4px 10px rgba(78,5,9,.3); }
+:focus-visible { outline: 2px solid var(--gold-400); outline-offset: 2px; }
+
+.footer {
+  text-align: center; font-size: 12px; line-height: 2;
+  color: rgba(255,246,218,.68); margin-top: 8px;
+}
+.footer a {
+  color: rgba(255,246,218,.86); text-decoration: none;
+  border-bottom: 1px dashed rgba(242,210,136,.5); padding-bottom: 1px;
+}
+@media (max-width: 360px) {
+  .head h1 { font-size: 24px; letter-spacing: 3px; }
+}
+</style>
+</head>
+<body>
+<div class="bg-layer" id="bgLayer"></div>
+
+<div class="wrap">
+
+  <header class="head">
+    <span class="seal" id="periodBadge">抽奖记录</span>
+    <h1>抽奖记录</h1>
+    <div class="meta" id="headMeta">加载中…</div>
+  </header>
+
+  <section class="card">
+    <h2>本期及往期记录</h2>
+    <div class="sub" id="sumLine">每期抽奖记录都会保留</div>
+    <div id="recList"></div>
+  </section>
+
+  <a class="btn btn-link" href="index.html">返回抽奖页</a>
+
+  <div class="footer">
+    手机号已打码，仅显示前后各 3 位<br>
+    记录保存在参与抽奖的那台设备上 · <a href="admin.html">管理配置</a>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var LS_KEY = 'lw_config', LS_REC = 'lw_records';
+  var PUBLISHED_BG = 'assets/bg.jpg';
+
+  function $(id) { return document.getElementById(id); }
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c];
+    });
+  }
+  function fmtDate(d) {
+    if (!d) return '';
+    var t = new Date(d), p = function (n) { return (n < 10 ? '0' : '') + n; };
+    return t.getFullYear() + '-' + p(t.getMonth() + 1) + '-' + p(t.getDate())
+      + ' ' + p(t.getHours()) + ':' + p(t.getMinutes());
+  }
+  function maskPhone(p) {
+    var s = String(p || '');
+    return s.length === 11 ? s.slice(0, 3) + '****' + s.slice(7) : (s || '—');
+  }
+  function getConfig() {
+    try { return JSON.parse(localStorage.getItem(LS_KEY) || '{}') || {}; } catch (e) { return {}; }
+  }
+  function getRecords() {
+    try { return JSON.parse(localStorage.getItem(LS_REC) || '[]'); } catch (e) { return []; }
+  }
+  function paintBg(src) {
+    $('bgLayer').style.backgroundImage = 'url("' + src + '")';
+    document.body.classList.add('has-bg');
+  }
+  function applyBg() {
+    var probe = new Image();
+    probe.onload = function () { paintBg(PUBLISHED_BG); };
+    probe.onerror = function () {
+      if (cfg.bgUrl) paintBg(cfg.bgUrl);
+    };
+    probe.src = PUBLISHED_BG;
+  }
+
+  var cfg = getConfig();
+  var records = getRecords();
+
+  $('periodBadge').textContent = cfg.period || '抽奖记录';
+
+  /* 头部摘要：总条数 + 最近一次时间 */
+  var last = records.length ? records[records.length - 1].submitTime : '';
+  $('headMeta').textContent = records.length
+    ? '共 ' + records.length + ' 条记录 · 最近一次 ' + fmtDate(last)
+    : '暂无记录';
+
+  /* 按期数 + 奖池分组，最新在前 */
+  var keys = [], map = {};
+  records.slice().reverse().forEach(function (r) {
+    var k = (r.period || '未命名期数') + ' · ' + (r.pool || cfg.poolName || '奖池');
+    if (!map[k]) { map[k] = []; keys.push(k); }
+    map[k].push(r);
+  });
+
+  if (!keys.length) {
+    $('sumLine').textContent = '暂无记录';
+    $('recList').innerHTML = '<div class="rec-empty">还没有抽奖记录<br>去抽奖页参与一次，记录就会出现在这里</div>';
+  } else {
+    $('sumLine').innerHTML = '共 <b>' + records.length + '</b> 条记录，按「期数 · 奖池」分组';
+    var html = '';
+    keys.forEach(function (k) {
+      html += '<div class="rec-group"><div class="rec-head">' + esc(k)
+        + '<span class="cnt">' + map[k].length + ' 条</span></div>';
+      map[k].forEach(function (r) {
+        html += '<div class="rec-row">'
+          + '<div class="rec-prize">' + esc(r.prize || '—') + '</div>'
+          + '<div class="rec-meta">'
+          + '<span><span class="k">抽奖时间</span> ' + fmtDate(r.submitTime) + '</span>'
+          + '<span><span class="k">出单手机号</span> ' + esc(maskPhone(r.phone)) + '</span>'
+          + '</div></div>';
+      });
+      html += '</div>';
+    });
+    $('recList').innerHTML = html;
+  }
+
+  applyBg();
+})();
+</script>
+</body>
+</html>
