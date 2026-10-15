@@ -773,17 +773,32 @@ select { appearance: none; background-image: linear-gradient(45deg, transparent 
       sel.appendChild(o);
     });
   }
+  /* 本期海报图：优先用后台在本机上传的那张，其次用仓库里已发布的 assets/poster.jpg */
+  function posterSource() {
+    return idbGet('poster::0').then(function (local) {
+      if (local) return local;
+      return new Promise(function (res) {
+        var probe = new Image();
+        probe.onload = function () { res('assets/poster.jpg'); };
+        probe.onerror = function () { res(null); };
+        probe.src = 'assets/poster.jpg';
+      });
+    });
+  }
   $('posterBtn').addEventListener('click', function () {
-    LuckyPoster.open({
-      title: cfg.period || '幸运大转盘',
-      subtitle: '奖池：' + (cfg.poolName || '进阶奖池'),
-      lines: [
-        '填写出单信息即可参与抽奖',
-        '同一工号累计出单满 ' + (cfg.peakAmount || 20000) + ' 元，解锁' + (cfg.peakPoolName || '巅峰奖池')
-      ],
-      url: location.origin + location.pathname.replace(/[^/]*$/, ''),
-      cover: 'assets/cover.jpg',
-      footer: '出单越多，惊喜越多 · 奖品以实物为准'
+    posterSource().then(function (src) {
+      LuckyPoster.open({
+        poster: src,          /* 有本期海报 → 以它为底，右下角自动加二维码 */
+        title: cfg.period || '幸运大转盘',
+        subtitle: '奖池：' + (cfg.poolName || '进阶奖池'),
+        lines: [
+          '填写出单信息即可参与抽奖',
+          '同一工号累计出单满 ' + (cfg.peakAmount || 20000) + ' 元，解锁' + (cfg.peakPoolName || '巅峰奖池')
+        ],
+        url: location.origin + location.pathname.replace(/[^/]*$/, ''),
+        cover: 'assets/cover.jpg',
+        footer: '出单越多，惊喜越多 · 奖品以实物为准'
+      });
     });
   });
 

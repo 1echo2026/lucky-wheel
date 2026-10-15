@@ -267,6 +267,8 @@ td { word-break: break-all; }
   display: flex; align-items: center; justify-content: center;
   font-size: 12px; color: var(--ink-soft); letter-spacing: .5px; text-align: center; padding: 10px;
 }
+/* 本期海报缩略：竖图用 contain，完整看到整张，便于确认右下角留白够不够 */
+.bg-preview.tall { height: 230px; background-size: contain; background-repeat: no-repeat; background-position: center; }
 .hidden { display: none !important; }
 /* 修改抽奖记录的浮层 */
 .r-mask {
@@ -387,6 +389,21 @@ td { word-break: break-all; }
           <br>换图后，如果对方看到的还是旧封面，是对方的客户端缓存——让对方重新打开一次链接或重启企微即可。
         </div>
         <input type="file" id="coverFile" accept="image/*" style="display:none">
+      </div>
+      <div class="field">
+        <label>本期海报图（每期换一次，点「生成推广海报」时的底图）</label>
+        <div class="btnrow" style="margin-bottom:10px">
+          <button class="btn" id="uploadPoster">上传本期海报图</button>
+          <button class="btn ghost" id="clearPoster">清除本机海报图</button>
+        </div>
+        <div class="hint" style="margin-bottom:10px">
+          上传后，抽奖页点「生成推广海报」会以这张图为底，<b>自动在右下角叠加二维码</b>，长按即可保存转发。
+          建议设计海报时右下角留出约 <b>1/4 宽</b>的空白，别让二维码压住文案。
+          <br>同时会发布到仓库 <b>assets/poster.jpg</b>（需令牌），换个手机/电脑也能直接生成海报。
+        </div>
+        <div class="bg-preview tall" id="posterPreview">尚未上传本期海报图（将用内置版式兜底）</div>
+        <div class="hint" id="posterState"></div>
+        <input type="file" id="posterFile" accept="image/*" style="display:none">
       </div>
       <div class="field">
         <label>活动背景图（所有人可见）</label>
@@ -661,7 +678,7 @@ td { word-break: break-all; }
     a.click();
     setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 200);
   }
-  function compressImage(file, cb, maxSize) {
+  function compressImage(file, cb, maxSize, quality) {
     var img = new Image();
     var url = URL.createObjectURL(file);
     img.onload = function () {
@@ -672,7 +689,7 @@ td { word-break: break-all; }
       cv.width = Math.round(img.width * scale);
       cv.height = Math.round(img.height * scale);
       cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
-      cb(cv.toDataURL('image/jpeg', 0.8));
+      cb(cv.toDataURL('image/jpeg', quality || 0.8));
     };
     img.onerror = function () {
       URL.revokeObjectURL(url);
@@ -785,6 +802,7 @@ td { word-break: break-all; }
     fillTemplateOptions();
     renderTemplatePreview();
     renderBgPreview();
+    renderPosterPreview();
   }
   $('saveSetting').addEventListener('click', function () {
     var ff = {}, fl = {}, fr = {};
@@ -822,7 +840,8 @@ td { word-break: break-all; }
   });
 
   /* ---------- 背景图（上传后发布到仓库，所有人可见） ---------- */
-  var BG_PATH = 'assets/bg.jpg', COVER_PATH = 'assets/cover.jpg', BG_BRANCH = 'main';
+  var BG_PATH = 'assets/bg.jpg', COVER_PATH = 'assets/cover.jpg',
+      POSTER_PATH = 'assets/poster.jpg', BG_BRANCH = 'main';
 
   function ghRepo() {
     return ($('setRepo').value || localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel').trim();
@@ -880,9 +899,10 @@ td { word-break: break-all; }
 
   function publishBg(dataURL) { publishAsset(BG_PATH, dataURL, 'chore: 更新活动背景图'); }
   function publishCover(dataURL) { publishAsset(COVER_PATH, dataURL, 'chore: 更新企业微信分享封面'); }
+  function publishPoster(dataURL) { publishAsset(POSTER_PATH, dataURL, 'chore: 更新本期活动海报', renderPosterPreview); }
 
-  /* 把图片发布到仓库指定路径（背景图 assets/bg.jpg / 分享封面 assets/cover.jpg） */
-  function publishAsset(path, dataURL, msg) {
+  /* 把图片发布到仓库指定路径（背景图 assets/bg.jpg / 分享封面 assets/cover.jpg / 本期海报 assets/poster.jpg） */
+  function publishAsset(path, dataURL, msg, onDone) {
     var token = localStorage.getItem(LS_GH_TOKEN);
     if (!token) { toast('请先填写并保存 GitHub 令牌'); return; }
     var repo = ghRepo();
@@ -904,7 +924,7 @@ td { word-break: break-all; }
         });
       })
       .then(function (r) {
-        if (r.ok) { toast('已发布，约 1~10 分钟后全网生效'); renderBgPreview(); return; }
+        if (r.ok) { toast('已发布，约 1~10 分钟后全网生效'); (onDone || renderBgPreview)(); return; }
         return r.json().then(function (e) { toast('发布失败：' + (e.message || ('HTTP ' + r.status))); })
           .catch(function () { toast('发布失败：HTTP ' + r.status + '（请检查令牌权限）'); });
       })
@@ -929,6 +949,56 @@ td { word-break: break-all; }
     idbDel('bg::0').then(function () {
       toast('已清除本机旧背景图');
       renderBgPreview();
+    });
+  });
+
+  /* ---------- 本期海报图（生成推广海报的底图 + 右下角自动叠二维码） ---------- */
+  function publishPoster(dataURL) { publishAsset(POSTER_PATH, dataURL, 'chore: 更新本期活动海报'); }
+
+  function renderPosterPreview() {
+    var box = $('posterPreview'), state = $('posterState');
+    var probe = new Image();
+    probe.onload = function () {
+      box.style.backgroundImage = 'url("' + POSTER_PATH + '?v=' + Date.now() + '")';
+      box.textContent = '';
+      state.textContent = '已发布到线上：所有设备点「生成推广海报」都会用这张图。';
+    };
+    probe.onerror = function () {
+      idbGet('poster::0').then(function (local) {
+        if (!local) {
+          box.style.backgroundImage = '';
+          box.textContent = '尚未上传本期海报图（将用内置版式兜底）';
+          state.textContent = '';
+          return;
+        }
+        box.style.backgroundImage = 'url("' + local + '")';
+        box.textContent = '';
+        state.textContent = '本机已保存：本机可立即生成海报；要跨设备使用请点上传时填好令牌（会发布到仓库）。';
+      });
+    };
+    probe.src = POSTER_PATH + '?v=' + Date.now();
+  }
+
+  $('uploadPoster').addEventListener('click', function () { $('posterFile').click(); });
+  $('posterFile').addEventListener('change', function () {
+    var f = this.files && this.files[0];
+    if (!f) return;
+    this.value = '';
+    compressImage(f, function (dataURL) {
+      idbPut('poster::0', dataURL).then(function () {
+        renderPosterPreview();
+        if (!localStorage.getItem(LS_GH_TOKEN)) {
+          toast('已保存到本机，现在就能生成海报（填令牌后可发布给其他设备用）');
+          return;
+        }
+        publishPoster(dataURL);
+      });
+    }, 1600, 0.88);
+  });
+  $('clearPoster').addEventListener('click', function () {
+    idbDel('poster::0').then(function () {
+      toast('已清除本机海报图');
+      renderPosterPreview();
     });
   });
   $('changePass').addEventListener('click', function () {

@@ -1,8 +1,11 @@
 /* ============================================================
-   推广海报：把封面图 + 活动信息 + 二维码合成一张图片
-   用法：LuckyPoster.open({ title, subtitle, lines, url, cover, footer })
+   推广海报
+   ① 本期海报模式：以「本期海报图」原图为底，右下角叠加二维码（推荐）
+   ② 兜底版式：没有本期海报图时，用封面图 + 活动信息 + 二维码现拼一张
+   用法：LuckyPoster.open({ poster, title, subtitle, lines, url, cover, footer })
    说明：二维码用 qrcode-generator 库，自托管在同源 assets/qrcode.js，无需联网；
-        封面必须是同源图片，否则 canvas 会被污染，toDataURL 会失败。
+        底图必须是同源图片（本机上传的 base64 或仓库里的 assets/*.jpg），
+        否则 canvas 会被污染，toDataURL 会失败。
    ============================================================ */
 (function () {
   'use strict';
@@ -71,6 +74,7 @@
   }
 
   function loadImage(src, cb) {
+    if (!src) return cb(null);
     var im = new Image();
     if (src.indexOf('data:') !== 0) im.crossOrigin = 'anonymous';
     im.onload = function () { cb(im); };
@@ -181,7 +185,51 @@
     g.font = '22px ' + FONT;
     g.fillText(data.footer || '', W / 2, H - 44);
 
-    cb(cv.toDataURL('image/png'));
+    cb(cv.toDataURL('image/png'), '活动推广海报.png');
+  }
+
+  /* ① 本期海报：以原图为底，右下角叠二维码（1:1 绘制，码不糊） */
+  function composePoster(base, qr, cb) {
+    var W2 = base.naturalWidth || base.width, H2 = base.naturalHeight || base.height;
+    var u = W2 / 375;                                 /* 以 375 宽设计图为基准等比缩放 */
+    var pad = Math.max(6, Math.round(11 * u));        /* 白卡内边距 */
+    /* 距海报边缘：左右按宽度算，底部按高度算——海报底的 logo 条/版权区才躲得开 */
+    var mx = Math.max(8, Math.round(W2 * 0.037));
+    var my = Math.max(mx, Math.round(H2 * 0.03));
+    var qs = qr ? qr.width : Math.max(40, Math.round(88 * u));
+    var cw = qs + pad * 2;
+    var x = Math.round(W2 - mx - cw), y = Math.round(H2 - my - cw);
+    var r = Math.max(4, Math.round(12 * u));
+
+    var cv = document.createElement('canvas');
+    cv.width = W2; cv.height = H2;
+    var g = cv.getContext('2d');
+    g.drawImage(base, 0, 0, W2, H2);
+
+    g.save();
+    g.shadowColor = 'rgba(120,70,20,.35)';
+    g.shadowBlur = Math.max(4, Math.round(16 * u));
+    g.shadowOffsetY = Math.max(1, Math.round(4 * u));
+    g.fillStyle = '#FFFDF8';
+    roundRect(g, x, y, cw, cw, r);
+    g.fill();
+    g.restore();
+
+    g.strokeStyle = 'rgba(210,165,68,.85)';
+    g.lineWidth = Math.max(1, Math.round(1.6 * u));
+    roundRect(g, x, y, cw, cw, r);
+    g.stroke();
+
+    if (qr) {
+      g.drawImage(qr, x + pad, y + pad);
+    } else {
+      g.fillStyle = '#8A4A14';
+      g.textAlign = 'center';
+      g.font = Math.round(13 * u) + 'px ' + FONT;
+      g.fillText('二维码未生成', x + cw / 2, y + cw / 2 - Math.round(5 * u));
+      g.fillText('请把链接直接发给老师', x + cw / 2, y + cw / 2 + Math.round(17 * u));
+    }
+    cb(cv.toDataURL('image/jpeg', 0.95), '活动推广海报.jpg');
   }
 
   function open(data) {
@@ -195,21 +243,32 @@
     img.style.display = 'none';
     btns.style.display = 'none';
 
+    function paint(dataURL, fname) {
+      var dl = m.querySelector('#posterDl');
+      img.onload = function () {
+        img.style.display = '';
+        load.style.display = 'none';
+        btns.style.display = '';
+      };
+      img.src = dataURL;
+      dl.href = dataURL;
+      dl.download = fname || '活动推广海报.png';   /* 底图模式输出 jpg，名要对得上 */
+    }
+
     loadQR(function (ok) {
-      makeQR(ok ? data.url : '', 240, function (qr) {
-        var start = function (cover) {
-          compose(data, cover, qr, function (dataURL) {
-            img.onload = function () {
-              img.style.display = '';
-              load.style.display = 'none';
-              btns.style.display = '';
-            };
-            img.src = dataURL;
-            m.querySelector('#posterDl').href = dataURL;
-          });
-        };
-        if (data.cover) loadImage(data.cover, function (im) { start(im); });
-        else start(null);
+      var url = ok ? data.url : '';
+      /* ① 有本期海报图 → 原图为底，右下角叠加二维码 */
+      loadImage(data.poster, function (base) {
+        if (base) {
+          var bw = base.naturalWidth || base.width;
+          var target = Math.min(Math.round(bw * 0.25), 900);
+          makeQR(url, target, function (qr) { composePoster(base, qr, paint); });
+          return;
+        }
+        /* ② 没有本期海报图 → 用内置版式兜底 */
+        loadImage(data.cover, function (cover) {
+          makeQR(url, 240, function (qr) { compose(data, cover, qr, paint); });
+        });
       });
     });
   }
