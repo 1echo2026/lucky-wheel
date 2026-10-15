@@ -16,14 +16,14 @@
 (function (global) {
   'use strict';
 
-  var RED_700 = '#8E0F18', RED_600 = '#B3121B', RED_500 = '#C8202A', RED_800 = '#6E0910';
-  var DEEP = '#4E0509', CONTOUR = '#3A0407', INK = '#8A5F16';
-  var GOLD_100 = '#FFF6DA', GOLD_200 = '#FFE9A8', GOLD_300 = '#F2D288', GOLD_500 = '#D2A544', GOLD_700 = '#9A6E1E';
-  var PAPER = '#FFF9F0', PAPER_2 = '#F6D9CF';
+  var RED_700 = '#D2803C', RED_600 = '#C9762F', RED_500 = '#DE9852', RED_800 = '#A85A22';
+  var DEEP = '#C98A4E', CONTOUR = '#A85A22', INK = '#8A7A6D';
+  var GOLD_100 = '#F3DAB8', GOLD_200 = '#EFD3AC', GOLD_300 = '#EBC08A', GOLD_500 = '#D2803C', GOLD_700 = '#C98A4E';
+  var PAPER = '#FDF3E7', PAPER_2 = '#F7E3CD';
 
   var CX = 160, CY = 160, R = 140;
   var TEXT_R = R - 12;                 /* 标签外端半径（内端 5 字时约 r=58，正好不压轮毂金线） */
-  var HALO_DARK = 'rgba(58,4,7,.55)';  /* 深色扇区上的文字描边（压出清晰边缘） */
+  var HALO_DARK = 'rgba(255,250,242,.85)';  /* 浅色扇区上的文字描边（压出清晰边缘） */
   var HALO_LIGHT = 'rgba(255,255,255,.85)';
 
   var SERIF = '"STZhongsong","Songti SC","STSong","SimSun",serif';
@@ -36,8 +36,8 @@
     '.lw-slice-label{font-family:' + SERIF + ';letter-spacing:.6px;}',
     '.lw-slice.win{animation:lwWinFlash .5s ease-in-out 5 alternate;}',
     '@keyframes lwWinFlash{to{fill:' + GOLD_200 + ';}}',
-    /* 铆钉灯珠：静止为深红铆钉，抽奖时点亮 */
-    '.lw-light{fill:' + DEEP + ';opacity:.85;}',
+    /* 铆钉灯珠：静止为暖金铆钉，抽奖时点亮 */
+    '.lw-light{fill:#E8C99C;opacity:.85;}',
     '.lw-stage.spinning .lw-light{animation:lwBlink .62s linear infinite;}',
     '@keyframes lwBlink{0%,100%{fill:' + GOLD_200 + ';opacity:1;}50%{fill:' + RED_700 + ';opacity:.55;}}',
     /* 如意水滴指针 */
@@ -49,9 +49,9 @@
     '.lw-spin-btn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);',
     'width:30%;aspect-ratio:1/1;min-width:78px;border-radius:50%;border:2px solid ' + GOLD_700 + ';',
     'cursor:pointer;z-index:4;padding:0;font-family:' + SERIF + ';',
-    'font-size:27px;font-weight:900;letter-spacing:1px;line-height:1;color:#6B1409;',
+    'font-size:27px;font-weight:900;letter-spacing:1px;line-height:1;color:#5C3218;',
     'text-shadow:0 1px 0 rgba(255,255,255,.55);',
-    'background:radial-gradient(circle at 34% 26%,#FFFDF4 0%,' + GOLD_300 + ' 40%,' + GOLD_500 + ' 70%,#9A6E1E 100%);',
+    'background:radial-gradient(circle at 34% 26%,#FFFDF4 0%,' + GOLD_300 + ' 40%,' + GOLD_500 + ' 70%,#C98A4E 100%);',
     'box-shadow:0 7px 18px rgba(0,0,0,.45),inset 0 0 0 3px rgba(255,253,240,.6);',
     'transition:transform .14s ease,filter .18s;}',
     '.lw-spin-btn:hover:not(:disabled){filter:brightness(1.06);transform:translate(-50%,-50%) scale(1.04);}',
@@ -63,20 +63,20 @@
     '.lw-cell-glow{fill:url(#lwGold);opacity:0;}',
     '.lw-cell.on .lw-cell-glow{opacity:.92;}',
     '.lw-cell-plate{fill:rgba(0,0,0,.32);}',
-    '.lw-cell-body{stroke:#5E070D;stroke-width:1;}',
+    '.lw-cell-body{stroke:#8A4620;stroke-width:1;}',
     '.lw-cell.on .lw-cell-body{fill:url(#lwCellHot);}',
     '.lw-cell-gloss{fill:url(#lwCellGloss);}',
-    '.lw-cell-in{fill:none;stroke:rgba(233,196,104,.55);stroke-width:1;}',
-    '.lw-cell.on .lw-cell-in{stroke:rgba(255,246,218,.65);}',
-    '.lw-cell-tier{font-family:' + SERIF + ';font-weight:700;fill:rgba(255,233,168,.8);}',
-    '.lw-cell-name{font-family:' + SERIF + ';font-weight:700;fill:#FFF6DA;}',
-    '.lw-cell.void .lw-cell-tier{fill:rgba(138,95,22,.8);}',
-    '.lw-cell.void .lw-cell-name{fill:#7A1F10;}',
-    '.lw-cell.on .lw-cell-tier{fill:#FFF6DA;}',
+    '.lw-cell-in{fill:none;stroke:rgba(217,179,106,.5);stroke-width:1;}',
+    '.lw-cell.on .lw-cell-in{stroke:rgba(255,250,242,.7);}',
+    '.lw-cell-tier{font-family:' + SERIF + ';font-weight:700;fill:rgba(255,244,228,.85);}',
+    '.lw-cell-name{font-family:' + SERIF + ';font-weight:700;fill:#FFF7EC;}',
+    '.lw-cell.void .lw-cell-tier{fill:rgba(92,50,24,.75);}',
+    '.lw-cell.void .lw-cell-name{fill:#5C3218;}',
+    '.lw-cell.on .lw-cell-tier{fill:#FFF7EC;}',
     '.lw-cell.on .lw-cell-name{fill:#FFFFFF;}',
     '.lw-cell.win .lw-cell-glow{animation:lwGridPulse .45s ease-in-out 5 alternate;}',
     '@keyframes lwGridPulse{from{opacity:.55;}to{opacity:1;}}',
-    '.lw-diamond{fill:url(#lwGold);stroke:#9A6E1E;stroke-width:.6;}',
+    '.lw-diamond{fill:url(#lwGold);stroke:#C98A4E;stroke-width:.6;}',
     '.lw-preview .lw-stage{pointer-events:none;}',
     /* 节庆橙：浅暖扇区 + 扇区奖品图 + 橙色立体按钮 + 底座 */
     '.lw-slice-label--sans{font-family:"PingFang SC","Microsoft YaHei",system-ui,sans-serif;letter-spacing:0;}',
@@ -118,11 +118,11 @@
   var DEFS = '<svg class="lw-defs" aria-hidden="true" focusable="false" '
     + 'style="position:absolute;width:0;height:0;overflow:hidden"><defs>'
     + '<linearGradient id="lwGold" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="' + GOLD_100 + '"/><stop offset="45%" stop-color="#E9C468"/>'
+    + '<stop offset="0%" stop-color="' + GOLD_100 + '"/><stop offset="45%" stop-color="#D9B36A"/>'
     + '<stop offset="100%" stop-color="' + GOLD_700 + '"/></linearGradient>'
     + '<linearGradient id="lwPointer" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#FFF9E6"/><stop offset="55%" stop-color="#E9C468"/>'
-    + '<stop offset="100%" stop-color="#C99A33"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#FDF3E7"/><stop offset="55%" stop-color="#D9B36A"/>'
+    + '<stop offset="100%" stop-color="#C98A4E"/></linearGradient>'
     /* 外圈金晕：只在轮缘外形成一圈微弱金雾 */
     + '<radialGradient id="lwHalo" gradientUnits="userSpaceOnUse" cx="' + CX + '" cy="' + CY + '" r="160">'
     + '<stop offset="0%" stop-color="' + GOLD_200 + '" stop-opacity="0"/>'
@@ -142,23 +142,23 @@
     + '<stop offset="100%" stop-color="' + GOLD_700 + '" stop-opacity=".16"/></radialGradient>'
     /* 九宫格：漆面底板 / 两色漆格 / 高亮热格 / 宣纸格 / 顶部光泽 */
     + '<linearGradient id="lwGridPlate" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#8E0F18"/><stop offset="48%" stop-color="#6E0910"/>'
-    + '<stop offset="100%" stop-color="#4A060B"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#A85A22"/><stop offset="48%" stop-color="#8A4620"/>'
+    + '<stop offset="100%" stop-color="#5C3218"/></linearGradient>'
     + '<radialGradient id="lwGridShade" gradientUnits="userSpaceOnUse" cx="160" cy="168" r="205">'
     + '<stop offset="0%" stop-color="#000000" stop-opacity="0"/>'
     + '<stop offset="64%" stop-color="#000000" stop-opacity="0"/>'
     + '<stop offset="100%" stop-color="#000000" stop-opacity=".34"/></radialGradient>'
     + '<linearGradient id="lwCellA" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#D42A34"/><stop offset="50%" stop-color="#B3121B"/>'
-    + '<stop offset="100%" stop-color="#8E0F18"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#DE9852"/><stop offset="50%" stop-color="#C9762F"/>'
+    + '<stop offset="100%" stop-color="#A85A22"/></linearGradient>'
     + '<linearGradient id="lwCellB" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#C01E28"/><stop offset="50%" stop-color="#9E131D"/>'
-    + '<stop offset="100%" stop-color="#7A0F16"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#C9762F"/><stop offset="50%" stop-color="#B26A2C"/>'
+    + '<stop offset="100%" stop-color="#8A4620"/></linearGradient>'
     + '<linearGradient id="lwCellHot" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#FF5A52"/><stop offset="45%" stop-color="#E53337"/>'
-    + '<stop offset="100%" stop-color="#B3121B"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#F0CB9E"/><stop offset="45%" stop-color="#DE9852"/>'
+    + '<stop offset="100%" stop-color="#C9762F"/></linearGradient>'
     + '<linearGradient id="lwCellPaper" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#FFF9F0"/><stop offset="100%" stop-color="#F0E0C4"/></linearGradient>'
+    + '<stop offset="0%" stop-color="#FDF3E7"/><stop offset="100%" stop-color="#F0DCC0"/></linearGradient>'
     + '<linearGradient id="lwCellGloss" x1="0" y1="0" x2="0" y2="1">'
     + '<stop offset="0%" stop-color="#FFFFFF" stop-opacity=".22"/>'
     + '<stop offset="38%" stop-color="#FFFFFF" stop-opacity=".05"/>'
@@ -167,7 +167,7 @@
     + '<stop offset="0%" stop-color="#FFD3AC"/><stop offset="55%" stop-color="#FFA76E"/>'
     + '<stop offset="100%" stop-color="#F0844A"/></linearGradient>'
     + '<linearGradient id="lwRingFest" x1="0" y1="0" x2="0" y2="1">'
-    + '<stop offset="0%" stop-color="#FFF6DA"/><stop offset="46%" stop-color="#FFD24A"/>'
+    + '<stop offset="0%" stop-color="#FFF7EC"/><stop offset="46%" stop-color="#FFD24A"/>'
     + '<stop offset="100%" stop-color="#EFA31C"/></linearGradient>'
     + '<radialGradient id="lwBtnFest" cx="38%" cy="28%" r="82%">'
     + '<stop offset="0%" stop-color="#FFB48C"/><stop offset="38%" stop-color="#FF7A4D"/>'
@@ -228,7 +228,7 @@
   var POINTER_SVG = function (width) {
     return '<svg class="lw-pointer" style="width:' + width + '%" viewBox="0 0 40 62" aria-hidden="true" focusable="false">'
       + '<path d="M20 60C11.6 41 4 34.4 4 22.4a16 16 0 0 1 32 0C36 34.4 28.4 41 20 60z"'
-      + ' fill="url(#lwPointer)" stroke="#7A0A12" stroke-width="1.3"/>'
+      + ' fill="url(#lwPointer)" stroke="#B96A27" stroke-width="1.3"/>'
       + '<path d="M20 60C11.6 41 4 34.4 4 22.4a16 16 0 0 1 32 0C36 34.4 28.4 41 20 60z"'
       + ' fill="none" stroke="' + GOLD_700 + '" stroke-width="1.3" opacity=".55"/>'
       + '<ellipse cx="14" cy="16" rx="5" ry="3.4" fill="#FFFDF4" opacity=".55"/>'
@@ -456,7 +456,7 @@
         s += '<rect x="107" y="107" width="106" height="106" rx="22" fill="url(#lwGold)"></rect>';
         s += '<rect x="107" y="107" width="106" height="106" rx="22" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1"></rect>';
         s += '<rect x="115" y="115" width="90" height="90" rx="17" fill="url(#lwCellB)"></rect>';
-        s += '<rect x="120" y="120" width="80" height="80" rx="13" fill="none" stroke="rgba(233,196,104,.5)" stroke-width="1"></rect>';
+        s += '<rect x="120" y="120" width="80" height="80" rx="13" fill="none" stroke="rgba(217,179,106,.45)" stroke-width="1"></rect>';
 
         /* —— 8 个漆格：两色红交替，“谢谢参与”用宣纸色 —— */
         for (i = 0; i < 8; i++) {
@@ -644,8 +644,8 @@
     };
   }
 
-  var VOID_DARK = { f: '#EADCC4', t: INK, h: HALO_LIGHT };
-  var VOID_LIGHT = { f: '#F1E3CE', t: INK, h: HALO_LIGHT };
+  var VOID_DARK = { f: '#F0E2CC', t: INK, h: HALO_LIGHT };
+  var VOID_LIGHT = { f: '#F5E9D6', t: INK, h: HALO_LIGHT };
 
   var TEMPLATES = [
     /* 转盘 · 珍藏红金（国潮款） */
@@ -656,7 +656,7 @@
       tones: [
         { f: RED_500, t: GOLD_200 },
         { f: RED_700, t: GOLD_200 },
-        { f: '#A8121C', t: GOLD_200 },
+        { f: '#C9762F', t: GOLD_200 },
         { f: RED_800, t: GOLD_300 }
       ],
       voidTone: VOID_DARK,

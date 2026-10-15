@@ -13,7 +13,7 @@
   var W = 750, H = 1180;
   /* 二维码库自托管在同源 assets/qrcode.js（单文件 qrcode-generator，无需联网） */
   var FONT = '"PingFang SC","Hiragino Sans GB","Microsoft YaHei",system-ui,sans-serif';
-  var RED = '#8C1C13', RED2 = '#A2553F', GOLD = '#D2A544', INK = '#5A2A18';
+  var RED = '#A85A22', RED2 = '#8A4620', GOLD = '#D9B36A', INK = '#5C3218';
 
   var cssDone = false, modal = null, qrMod = null;
 
@@ -30,7 +30,7 @@
       + '.p-mask.open{display:flex;}'
       + '.p-box{width:100%;max-width:400px;text-align:center;}'
       + '.p-tip{color:#8A4A14;font-size:13px;font-weight:600;letter-spacing:.5px;margin-bottom:12px;}'
-      + '.p-box img{width:100%;border-radius:14px;background:#FFF9F0;'
+      + '.p-box img{width:100%;border-radius:14px;background:#FFFBF6;'
       + 'box-shadow:0 0 0 1px rgba(210,165,68,.55),0 16px 40px rgba(146,84,26,.30);}'
       + '.p-load{color:#8A4A14;font-size:15px;padding:70px 0;}'
       + '.p-box .btnrow{margin-top:14px;display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}'
@@ -119,7 +119,7 @@
     var g = cv.getContext('2d');
 
     /* 暖白底 + 描金外框 */
-    g.fillStyle = '#FFF9F0';
+    g.fillStyle = '#FDF3E7';
     g.fillRect(0, 0, W, H);
     g.strokeStyle = GOLD;
     g.lineWidth = 4;
