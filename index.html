@@ -825,6 +825,14 @@ body.has-bg .bg-layer { display: block; }
   /* 只把模板能展示的奖品放进奖池，保证「看得见 = 抽得到」 */
   function activePrizes() { return poolPrizes().slice(0, tpl.slots || 10); }
 
+  /* 同等级可选奖品：兼容旧的纯字符串写法，统一成 [{ id, name }]（id 与后台迁移规则一致） */
+  function prizeOptions(prize) {
+    if (!prize || !prize.options) return [];
+    return prize.options.map(function (o, i) {
+      if (typeof o === 'string') return { id: prize.id + '_o' + i, name: o };
+      return { id: o.id || (prize.id + '_o' + i), name: o.name || '' };
+    }).filter(function (o) { return String(o.name).trim(); });
+  }
   /* 奖品图：优先用后台给该奖品上传的主图，其次尝试仓库里已发布的奖品图 */
   function prizeImage(prize) {
     if (!prize || !prize.id) return Promise.resolve(null);
@@ -910,7 +918,7 @@ body.has-bg .bg-layer { display: block; }
       tpl.spin($('wheelArea'), idx, function () {
         spinning = false;
         /* 同等级多奖品：先让用户选一件，选定后再扣库存、写记录 */
-        var opts = (prize.options || []).filter(function (o) { return o && String(o).trim(); });
+        var opts = prizeOptions(prize);
         if (!isVoid(prize) && opts.length) {
           showChoice(prize, opts, function (chosen) {
             finalizeWin(prize, chosen);
@@ -934,7 +942,7 @@ body.has-bg .bg-layer { display: block; }
       addRecord({
         phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
         amount: who.amount, cum: who.cum,
-        prizeId: prize.id, prize: prize.name, option: option || '',
+        prizeId: prize.id, prize: prize.name, option: option ? option.name : '',
         period: cfg.period, pool: poolLabel(),
         submitTime: new Date().toISOString()
       });
@@ -967,7 +975,7 @@ body.has-bg .bg-layer { display: block; }
     opts.forEach(function (opt) {
       var btn = document.createElement('button');
       btn.type = 'button';
-      btn.textContent = opt;
+      btn.textContent = opt.name;
       btn.addEventListener('click', function () {
         choicePending = false;
         $('mOptBox').style.display = 'none';
@@ -1002,7 +1010,7 @@ body.has-bg .bg-layer { display: block; }
     seal.classList.toggle('plain', voidHit);
     seal.innerHTML = voidHit ? '<span>再来</span>' : '<span>恭</span><span>喜</span><span>中</span><span>奖</span>';
     seal.setAttribute('aria-hidden', 'true');
-    $('mName').textContent = prize.name + (option || '');
+    $('mName').textContent = prize.name + (option ? option.name : '');
     $('mOptBox').style.display = 'none';
     $('mPimg').style.display = '';
     $('mClose').style.display = '';
@@ -1019,22 +1027,32 @@ body.has-bg .bg-layer { display: block; }
     if (!voidHit && !reduceMotion()) burstCoins();
     $('mClose').focus();
 
+    /* 有选项时展示「所选那一件」的图，否则展示奖项本体的图 */
+    var ownerId = (option && option.id) ? option.id : prize.id;
     var keys = [];
-    for (var i = 0; i < 5; i++) keys.push(prize.id + '::' + i);
+    for (var i = 0; i < 5; i++) keys.push(ownerId + '::' + i);
     Promise.all(keys.map(idbGet)).then(function (arr) {
       modalImgs = arr.filter(Boolean);
-      if (!modalImgs.length) { $('mNoimg').textContent = '暂无奖品图片'; return; }
-      $('mNoimg').style.display = 'none';
-      $('mImg').style.display = 'block';
-      renderModalImg();
-      if (modalImgs.length > 1) {
-        $('mPrev').style.display = 'block';
-        $('mNext').style.display = 'block';
-        var dots = '';
-        modalImgs.forEach(function (_, i) { dots += '<i class="' + (i === 0 ? 'on' : '') + '"></i>'; });
-        $('mDots').innerHTML = dots;
-      }
+      if (modalImgs.length) { paintModalImgs(); return; }
+      /* 本机没有图 → 试仓库里发布的 assets/prizes/<id>.jpg（后台发布后所有访客都能看到） */
+      var rel = 'assets/prizes/' + ownerId + '.jpg';
+      var probe = new Image();
+      probe.onload = function () { modalImgs = [rel]; paintModalImgs(); };
+      probe.onerror = function () { $('mNoimg').textContent = '暂无奖品图片'; };
+      probe.src = rel;
     });
+  }
+  function paintModalImgs() {
+    $('mNoimg').style.display = 'none';
+    $('mImg').style.display = 'block';
+    renderModalImg();
+    if (modalImgs.length > 1) {
+      $('mPrev').style.display = 'block';
+      $('mNext').style.display = 'block';
+      var dots = '';
+      modalImgs.forEach(function (_, i) { dots += '<i class="' + (i === 0 ? 'on' : '') + '"></i>'; });
+      $('mDots').innerHTML = dots;
+    }
   }
   function renderModalImg() {
     $('mImg').src = modalImgs[modalIdx];
