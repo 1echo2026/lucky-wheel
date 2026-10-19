@@ -254,7 +254,7 @@ body.has-bg .bg-layer { display: block; }
         + '<span class="cnt">' + map[k].length + ' 条</span></div>';
       map[k].forEach(function (r) {
         html += '<div class="rec-row">'
-          + '<div class="rec-prize">' + esc(r.prize || '—') + '</div>'
+          + '<div class="rec-prize">' + esc(r.prize ? (r.prize + (r.option || '')) : '—') + '</div>'
           + '<div class="rec-meta">'
           + '<span><span class="k">抽奖时间</span> ' + fmtDate(r.submitTime) + '</span>'
           + '<span><span class="k">出单手机号</span> ' + esc(maskPhone(r.phone)) + '</span>'

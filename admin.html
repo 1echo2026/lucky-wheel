@@ -96,6 +96,11 @@ body {
 }
 .hint { font-size: 12.5px; color: var(--ink-soft); margin-top: 6px; line-height: 1.7; }
 .hint b { color: var(--brand-700); }
+/* 同等级可选奖品编辑行 */
+.opt-row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+.opt-row input { flex: 1; }
+.opt-row .opt-del { flex: none; width: 40px; min-width: 40px; height: 40px; padding: 0; }
+#addOpt { margin-top: 2px; }
 
 /* 按钮 */
 .btn {
@@ -455,6 +460,12 @@ td { word-break: break-all; overflow-wrap: anywhere; }
       <div class="field">
         <label>库存数量（留空 = 不限，抽完自动移出奖池）</label>
         <input type="number" id="pStock" min="0" placeholder="留空不限">
+      </div>
+      <div class="field">
+        <label>同等级可选奖品（抽中后让用户任选其一，不需要则留空）</label>
+        <div id="optList"></div>
+        <button class="btn ghost small" id="addOpt" type="button">+ 添加同等级奖品</button>
+        <div class="hint">例如奖项名称填「二等奖」，可选奖品填「奖品A」「奖品B」；抽中后用户自己选一件，记录与导出显示「二等奖奖品A」</div>
       </div>
       <div class="field">
         <label>奖品图片（最多 5 张，第 1 张为主图，用于转盘与弹窗封面）</label>
@@ -1036,7 +1047,8 @@ td { word-break: break-all; overflow-wrap: anywhere; }
         '<div class="thumb" data-thumb="' + p.id + '">…</div>' +
         '<div class="info">' +
           '<div class="n"></div>' +
-          '<div class="m">概率 ' + (parseFloat(p.prob) || 0) + '% · 库存 ' + stockTxt + '</div>' +
+          '<div class="m">概率 ' + (parseFloat(p.prob) || 0) + '% · 库存 ' + stockTxt
+            + (p.options && p.options.length ? ' · ' + p.options.length + ' 件可选' : '') + '</div>' +
         '</div>' +
         '<div class="acts">' +
           '<button class="btn small ghost" data-act="edit" data-id="' + p.id + '">编辑</button>' +
@@ -1083,6 +1095,47 @@ td { word-break: break-all; overflow-wrap: anywhere; }
   });
 
   /* ---------- 奖品编辑 ---------- */
+  var editOptions = []; /* 当前编辑奖品的同等级可选项（字符串数组） */
+  function collectOptInputs() {
+    var arr = [];
+    Array.prototype.forEach.call($('optList').querySelectorAll('input'), function (inp) {
+      arr.push(inp.value);
+    });
+    editOptions = arr;
+  }
+  function renderOptList() {
+    var box = $('optList');
+    box.innerHTML = '';
+    editOptions.forEach(function (opt, i) {
+      var row = document.createElement('div');
+      row.className = 'opt-row';
+      var inp = document.createElement('input');
+      inp.type = 'text';
+      inp.value = opt;
+      inp.placeholder = '如 奖品A';
+      inp.maxLength = 30;
+      var del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'btn small danger opt-del';
+      del.textContent = '×';
+      del.addEventListener('click', function () {
+        collectOptInputs();
+        editOptions.splice(i, 1);
+        renderOptList();
+      });
+      row.appendChild(inp);
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+  }
+  $('addOpt').addEventListener('click', function () {
+    collectOptInputs();
+    if (editOptions.length >= 6) return toast('同等级奖品最多 6 件');
+    editOptions.push('');
+    renderOptList();
+    var inputs = $('optList').querySelectorAll('input');
+    if (inputs.length) inputs[inputs.length - 1].focus();
+  });
   function openEdit(id) {
     editing = id;
     var p = currentPrizeList().filter(function (x) { return x.id === id; })[0];
@@ -1092,6 +1145,8 @@ td { word-break: break-all; overflow-wrap: anywhere; }
     $('pName').value = p.name || '';
     $('pProb').value = (p.prob !== undefined ? p.prob : 0);
     $('pStock').value = p.stock === null || p.stock === undefined ? '' : p.stock;
+    editOptions = (p.options || []).slice();
+    renderOptList();
     renderUploads(id);
     renderPrizeList();
     $('editCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1165,6 +1220,9 @@ td { word-break: break-all; overflow-wrap: anywhere; }
     p.name = name;
     p.prob = prob;
     p.stock = st === '' ? null : Math.max(0, parseInt(st, 10));
+    collectOptInputs();
+    var opts = editOptions.map(function (o) { return String(o).trim(); }).filter(Boolean);
+    if (opts.length) p.options = opts; else delete p.options;
     saveConfig(cfg);
     renderPrizeList();
     renderTemplatePreview();
@@ -1222,7 +1280,7 @@ td { word-break: break-all; overflow-wrap: anywhere; }
         '<td>' + esc(r.name || '-') + '</td>' +
         '<td>' + esc(r.base || '-') + '</td>' +
         '<td>' + esc(r.gonghao || '-') + '</td>' +
-        '<td>' + esc(r.prize || '-') + '</td>' +
+        '<td>' + esc(r.prize ? (r.prize + (r.option || '')) : '-') + '</td>' +
         '<td><button class="btn small ghost" data-rec="edit" data-i="' + it.i + '">改</button> '
         + '<button class="btn small danger" data-rec="del" data-i="' + it.i + '">删</button></td>';
       tb.appendChild(tr);
@@ -1321,11 +1379,18 @@ td { word-break: break-all; overflow-wrap: anywhere; }
   $('exportRec').addEventListener('click', function () {
     var recs = getRecords();
     if (!recs.length) return toast('暂无中奖记录');
+    /* 导出时把同等级可选项合并进奖品名：「二等奖」+「奖品A」→「二等奖奖品A」 */
+    var out = recs.map(function (r) {
+      var o = {};
+      for (var k in r) o[k] = r[k];
+      if (r.option) o.prize = (r.prize || '') + r.option;
+      return o;
+    });
     var d = new Date();
     var p = function (n) { return (n < 10 ? '0' : '') + n; };
     var name = 'lucky-wheel-records-' + d.getFullYear() + p(d.getMonth() + 1) + p(d.getDate()) + '.json';
-    download(name, JSON.stringify(recs, null, 2));
-    toast('记录已导出（' + recs.length + ' 条）');
+    download(name, JSON.stringify(out, null, 2));
+    toast('记录已导出（' + out.length + ' 条）');
   });
   $('exportCfg').addEventListener('click', function () {
     var d = new Date();
