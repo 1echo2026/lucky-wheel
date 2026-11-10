@@ -299,6 +299,27 @@ td { word-break: break-all; overflow-wrap: anywhere; }
       </div>
     </div>
 
+    <!-- 飞书多维表格同步 -->
+    <div class="card">
+      <h2><span>飞书多维表格同步</span><button class="btn small" id="saveSync">保存同步设置</button></h2>
+      <div class="sub">抽奖完成后自动把这条记录写入飞书多维表格（表格 + 仪表盘），跨设备集中查看</div>
+      <div class="grid2">
+        <div class="field">
+          <label>同步地址（Cloudflare Worker 地址）</label>
+          <input type="text" id="setSyncUrl" placeholder="https://xxx.workers.dev">
+        </div>
+        <div class="field">
+          <label>同步密钥（与 Worker 里的 SYNC_KEY 一致，可留空）</label>
+          <input type="text" id="setSyncKey" placeholder="自定义口令">
+        </div>
+      </div>
+      <div class="btnrow">
+        <button class="btn ghost" id="testSync">测试连接</button>
+        <button class="btn ghost" id="pushAll">回传本机全部记录</button>
+      </div>
+      <div class="hint" id="syncState">未配置同步地址。</div>
+    </div>
+
     <!-- 活动设置 -->
     <div class="card">
       <h2><span>活动设置</span><button class="btn small" id="saveSetting">保存设置</button></h2>
@@ -784,6 +805,9 @@ td { word-break: break-all; overflow-wrap: anywhere; }
     $('setBgUrl').value = cfg.bgUrl || '';
     $('setRepo').value = localStorage.getItem(LS_GH_REPO) || '1echo2026/lucky-wheel';
     updateTokenState();
+    $('setSyncUrl').value = cfg.syncUrl || '';
+    $('setSyncKey').value = cfg.syncKey || '';
+    renderSyncState();
     $('setNeedForm').checked = !!cfg.needForm;
     $('setFormTitle').value = cfg.formTitle || '参与问卷';
     $('setFormNote').value = cfg.formNote || '';
@@ -836,6 +860,78 @@ td { word-break: break-all; overflow-wrap: anywhere; }
     fillPoolOptions();
     renderBgPreview();
     toast('活动设置已保存');
+  });
+
+  /* ---------- 飞书多维表格同步 ---------- */
+  function syncReady() { return !!(cfg.syncUrl && /^https?:\/\//.test(cfg.syncUrl)); }
+  function renderSyncState() {
+    var el = $('syncState');
+    if (!el) return;
+    if (!syncReady()) {
+      el.textContent = '未配置同步地址，记录只存在本机浏览器。';
+      return;
+    }
+    var recs = getRecords();
+    var wait = recs.filter(function (r) { return r.synced !== true; }).length;
+    el.textContent = '已配置：' + cfg.syncUrl + '；本机记录 ' + recs.length + ' 条，待回传 ' + wait + ' 条。';
+  }
+  function recToPayload(rec) {
+    return {
+      period: rec.period, pool: rec.pool,
+      prize: rec.prize, option: rec.option,
+      name: rec.name, base: rec.base, phone: rec.phone, gonghao: rec.gonghao,
+      amount: rec.amount,
+      timeText: fmtDate(rec.submitTime),
+      timeMs: rec.submitTime ? new Date(rec.submitTime).getTime() : Date.now()
+    };
+  }
+  function postSync(body) {
+    return fetch(cfg.syncUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key: cfg.syncKey || '', ping: body.ping || false, records: body.records || null })
+    }).then(function (r) { return r.json(); });
+  }
+  function readSyncInputs() {
+    cfg.syncUrl = $('setSyncUrl').value.trim();
+    cfg.syncKey = $('setSyncKey').value.trim();
+    saveConfig(cfg);
+    return syncReady();
+  }
+  $('saveSync').addEventListener('click', function () {
+    var ok = readSyncInputs();
+    renderSyncState();
+    toast(ok ? '同步设置已保存' : '已清空同步地址');
+  });
+  $('testSync').addEventListener('click', function () {
+    if (!readSyncInputs()) return toast('请先填写同步地址');
+    $('syncState').textContent = '正在测试连接…';
+    postSync({ ping: true }).then(function (j) {
+      $('syncState').textContent = (j && j.ok)
+        ? '连接正常，抽奖记录会自动写入飞书多维表格。'
+        : '连接失败：' + ((j && j.error) || '未知错误');
+    }).catch(function (e) {
+      $('syncState').textContent = '连接失败：' + e.message;
+    });
+  });
+  $('pushAll').addEventListener('click', function () {
+    if (!readSyncInputs()) return toast('请先填写同步地址');
+    var recs = getRecords();
+    if (!recs.length) return toast('本机没有抽奖记录');
+    if (!confirm('将本机 ' + recs.length + ' 条记录全部写入飞书多维表格，继续？')) return;
+    $('syncState').textContent = '正在回传…';
+    postSync({ records: recs.map(recToPayload) }).then(function (j) {
+      if (j && j.ok) {
+        recs.forEach(function (r) { r.synced = true; });
+        saveRecords(recs);
+        renderSyncState();
+        toast('已回传 ' + (j.inserted === undefined ? recs.length : j.inserted) + ' 条');
+      } else {
+        $('syncState').textContent = '回传失败：' + ((j && j.error) || '未知错误');
+      }
+    }).catch(function (e) {
+      $('syncState').textContent = '回传失败：' + e.message;
+    });
   });
 
   /* ---------- 背景图（上传后发布到仓库，所有人可见） ---------- */

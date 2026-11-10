@@ -536,6 +536,8 @@ body.has-bg .bg-layer { display: block; }
       if (!c.formRequired) c.formRequired = defaultConfig().formRequired;
       if (c.formTitle === undefined) c.formTitle = '参与问卷';
       if (c.formNote === undefined) c.formNote = '问卷信息仅用于本次抽奖核验与兑奖';
+      if (c.syncUrl === undefined) c.syncUrl = '';
+      if (c.syncKey === undefined) c.syncKey = '';
       return c;
     } catch (e) { return defaultConfig(); }
   }
@@ -545,6 +547,48 @@ body.has-bg .bg-layer { display: block; }
   }
   function saveRecords(r) { localStorage.setItem(LS_REC, JSON.stringify(r)); }
   function addRecord(rec) { var r = getRecords(); r.push(rec); saveRecords(r); }
+
+  /* ---------- 飞书多维表格同步 ----------
+     静态站不能存飞书密钥，统一 POST 到 Cloudflare Worker 中转，由它代为写入。 */
+  function syncOn() {
+    return !!(cfg.syncUrl && /^https?:\/\//.test(cfg.syncUrl));
+  }
+  function syncPayload(rec) {
+    return {
+      key: cfg.syncKey || '',
+      record: {
+        period: rec.period, pool: rec.pool,
+        prize: rec.prize, option: rec.option,
+        name: rec.name, base: rec.base, phone: rec.phone, gonghao: rec.gonghao,
+        amount: rec.amount,
+        timeText: fmtDate(rec.submitTime),
+        timeMs: rec.submitTime ? new Date(rec.submitTime).getTime() : Date.now()
+      }
+    };
+  }
+  function markSynced(time, ok) {
+    var r = getRecords(), hit = false;
+    r.forEach(function (x) {
+      if (x.submitTime === time) { x.synced = ok; hit = true; }
+    });
+    if (hit) saveRecords(r);
+  }
+  function syncRecord(rec) {
+    if (!syncOn() || !rec) return;
+    fetch(cfg.syncUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(syncPayload(rec))
+    }).then(function (res) { return res.json(); })
+      .then(function (j) { markSynced(rec.submitTime, !!(j && j.ok)); })
+      .catch(function () { markSynced(rec.submitTime, false); });
+  }
+  /* 打开页面时补传上次没成功的记录（每台设备各自补自己的） */
+  function syncPending() {
+    if (!syncOn()) return;
+    getRecords().filter(function (r) { return r.synced !== true; })
+      .slice(0, 20).forEach(syncRecord);
+  }
 
   var dbp = new Promise(function (resolve) {
     var req = indexedDB.open(IDB_NAME, 1);
@@ -939,13 +983,15 @@ body.has-bg .bg-layer { display: block; }
       saveConfig(cfg);
     }
     if (who) {
-      addRecord({
+      var rec = {
         phone: who.phone, name: who.name, base: who.base, gonghao: who.gonghao,
         amount: who.amount, cum: who.cum,
         prizeId: prize.id, prize: prize.name, option: option ? option.name : '',
         period: cfg.period, pool: poolLabel(),
-        submitTime: new Date().toISOString()
-      });
+        submitTime: new Date().toISOString(), synced: false
+      };
+      addRecord(rec);
+      syncRecord(rec);
     }
     $('joinedCnt').textContent = periodRecords().length + ' 人';
     var left = who && who.phone ? Math.max(0, (cfg.maxDraws || 1) - usedCount(who.phone)) : (cfg.maxDraws || 1);
@@ -1093,6 +1139,7 @@ body.has-bg .bg-layer { display: block; }
     setSpinUsed('已截止');
   }
   renderRecords();
+  syncPending();
 })();
 </script>
 </body>
